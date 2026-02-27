@@ -1,22 +1,49 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Custom base styles */
 @layer base {
-  body {
-    @apply antialiased;
-  }
-  
-  * {
-    @apply scroll-smooth;
-  }
+  * { box-sizing: border-box; }
+  body { @apply bg-dark-950 text-slate-100 font-sans antialiased; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-dark-900; }
+  ::-webkit-scrollbar-thumb { @apply bg-dark-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-brand-500; }
 }
 
-/* Custom component styles */
 @layer components {
-  /* Add your custom component classes here */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-400
+    text-white font-semibold text-sm rounded-xl transition-all duration-200
+    focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-dark-950
+    disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-dark-800 hover:bg-dark-700
+    text-slate-200 font-semibold text-sm rounded-xl border border-dark-600 transition-all duration-200
+    disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+    text-slate-400 hover:text-slate-200 hover:bg-dark-800 font-medium text-sm rounded-lg transition-all duration-200;
+  }
+  .input-field {
+    @apply w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl text-slate-100
+    placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200;
+  }
+  .input-label { @apply block text-sm font-medium text-slate-300 mb-2; }
+  .input-error { @apply text-red-400 text-xs mt-1.5 flex items-center gap-1; }
+  .card       { @apply bg-dark-900 border border-dark-700 rounded-2xl p-6; }
+  .card-glass { @apply bg-dark-900/60 backdrop-blur-sm border border-dark-700/60 rounded-2xl p-6; }
+  .auth-container {
+    @apply min-h-screen flex items-center justify-center bg-dark-950 p-4;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(224,125,21,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(67,79,104,0.12) 0%, transparent 50%);
+  }
 }
 
-/* Custom utility styles */
 @layer utilities {
-  /* Add your custom utility classes here */
+  .text-gradient { @apply bg-gradient-to-r from-brand-400 to-brand-300 bg-clip-text text-transparent; }
+  .glow-brand    { box-shadow: 0 0 20px rgba(224,125,21,0.3); }
 }

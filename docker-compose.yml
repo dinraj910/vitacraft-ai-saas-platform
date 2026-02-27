@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: yourdockerhubuser/vitacraft-frontend:latest
+    container_name: vitacraft-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - vitacraft-network
+    restart: unless-stopped
+
+  backend:
+    image: yourdockerhubuser/vitacraft-backend:latest
+    container_name: vitacraft-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    networks:
+      - vitacraft-network
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: vitacraft-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    networks:
+      - vitacraft-network
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+
+networks:
+  vitacraft-network:
+    driver: bridge

@@ -1,6 +1,36 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Brand colors */
+  --color-brand-300: #f0bc6e;
+  --color-brand-400: #e99a35;
+  --color-brand-500: #e07d15;
+  --color-brand-600: #c56010;
+  --color-brand-700: #a44410;
+
+  /* Dark palette */
+  --color-dark-600: #526180;
+  --color-dark-700: #434f68;
+  --color-dark-800: #3a4458;
+  --color-dark-900: #343c4c;
+  --color-dark-950: #0f1117;
+
+  /* Font */
+  --font-family-sans: 'Sora', system-ui, sans-serif;
+
+  /* Animations */
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-slide-up: slideUp 0.4s ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+}
 
 @layer base {
   * { box-sizing: border-box; }

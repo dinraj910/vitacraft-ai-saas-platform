@@ -2,8 +2,8 @@ const axios  = require('axios');
 const { OLLAMA_BASE_URL, OLLAMA_MODEL } = require('../config/ollama');
 const logger = require('../utils/logger');
 
-// Timeout: 2 minutes — phi3:mini is slow on CPU
-const OLLAMA_TIMEOUT = 120_000;
+// Timeout: 4 minutes — phi3:mini on CPU is very slow; resume generation can take 3+ min
+const OLLAMA_TIMEOUT = 240_000;
 
 /**
  * Core Ollama invocation.
@@ -51,8 +51,14 @@ const generateWithOllama = async (prompt, options = {}) => {
       err.code   = 'AI_SERVICE_UNAVAILABLE';
       throw err;
     }
-    if (error.code === 'ECONNABORTED') {
-      const err = new Error('AI generation timed out. Please try again with a shorter input.');
+    // Catch all timeout variants across axios versions and Node.js
+    if (
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ERR_CANCELED' ||
+      (error.message && error.message.toLowerCase().includes('timeout'))
+    ) {
+      const err = new Error('AI generation timed out. Please try again.');
       err.status = 504;
       err.code   = 'AI_TIMEOUT';
       throw err;
@@ -108,9 +114,9 @@ EDUCATION
 const generateResume = async (userInput) => {
   const prompt = buildResumePrompt(userInput);
   return generateWithOllama(prompt, {
-    maxTokens:    1400,
+    maxTokens:    700,
     temperature:  0.6,
-    systemPrompt: 'You are an expert resume writer with 15 years of experience in HR and talent acquisition. You write clean, ATS-optimized, professional resumes.',
+    systemPrompt: 'You are an expert resume writer. Write clean, ATS-optimized resumes in plain text only.',
   });
 };
 
@@ -135,9 +141,9 @@ Output plain text only — no markdown.
 const generateCoverLetter = async (userInput) => {
   const prompt = buildCoverLetterPrompt(userInput);
   return generateWithOllama(prompt, {
-    maxTokens:    800,
+    maxTokens:    450,
     temperature:  0.7,
-    systemPrompt: 'You are an expert cover letter writer who crafts compelling, personalized cover letters.',
+    systemPrompt: 'You are an expert cover letter writer. Write a compelling, personalized cover letter in plain text only.',
   });
 };
 
@@ -167,9 +173,9 @@ Output plain text with clear section headers.
 const analyzeJobDescription = async (userInput) => {
   const prompt = buildJobAnalysisPrompt(userInput);
   return generateWithOllama(prompt, {
-    maxTokens:    900,
+    maxTokens:    550,
     temperature:  0.5,
-    systemPrompt: 'You are an expert career coach and ATS optimization specialist.',
+    systemPrompt: 'You are an expert career coach and ATS optimization specialist. Be concise.',
   });
 };
 

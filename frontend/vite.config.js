@@ -10,6 +10,8 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
+        timeout: 300000,        // 5 min — Ollama AI generation is slow on CPU
+        proxyTimeout: 300000,  // 5 min proxy-to-backend timeout
       },
     },
   },

@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 5000;
 // Security
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', process.env.FRONTEND_URL].filter(Boolean),
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174', process.env.FRONTEND_URL].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -57,10 +57,16 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info(`🚀 VitaCraft AI Backend running on port ${PORT}`);
     logger.info(`🔗 http://localhost:${PORT}/health`);
   });
+  
+  // Increase timeout for long-running AI generation requests
+  // Ollama can take up to 120s, so we set 180s (3 min) to be safe
+  server.timeout = 180000;
+  server.keepAliveTimeout = 185000;
+  server.headersTimeout = 190000;
 }
 
 module.exports = app;

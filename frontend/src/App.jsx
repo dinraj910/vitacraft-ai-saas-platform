@@ -5,7 +5,14 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import { FileText, Mail, Briefcase, Zap, Check, ArrowRight, Star, Menu, X, Sparkles, TrendingUp, Shield, Clock, LayoutDashboard } from 'lucide-react';
+import ResumeGenerator from './pages/ResumeGenerator';
+import {
+  FileText, Mail, Briefcase, Zap, TrendingUp, LogOut,
+  Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
+  ChevronRight, Bell, Menu, X, Clock, ArrowUpRight, Plus,
+  Loader2, Download,
+} from 'lucide-react';
+import { aiAPI, filesAPI } from '../api/ai.api';
 import useAuthStore from './store/authStore';
 
 /* ─── Landing Page ─────────────────────────────────────────────────── */
@@ -300,6 +307,7 @@ const App = () => (
         <Route path="/login"     element={<Login />} />
         <Route path="/register"  element={<Register />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/resume"    element={<ProtectedRoute><ResumeGenerator /></ProtectedRoute>} />
         <Route path="*"          element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

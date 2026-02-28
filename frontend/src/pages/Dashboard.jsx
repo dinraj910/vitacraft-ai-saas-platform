@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FileText, Mail, Briefcase, Zap, TrendingUp, LogOut,
   Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
   ChevronRight, Bell, Menu, X, Clock, ArrowUpRight, Plus,
+  Loader2, Download,
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useAuthStore from '../store/authStore';
+import { aiAPI, filesAPI } from '../api/ai.api';
+
 
 /* ─── Credit Bar ─── */
 const CreditBar = ({ balance, total }) => {
@@ -103,6 +106,7 @@ const ToolCard = ({ icon: Icon, title, description, credits, badge, onClick, dis
    ════════════════════════════════════════════════════════════════════ */
 const Dashboard = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -111,6 +115,28 @@ const Dashboard = () => {
   const totalUsed    = user?.creditAccount?.totalUsed ?? 0;
   const plan         = user?.subscription?.plan?.displayName ?? 'Free';
   const totalCredits = user?.subscription?.plan?.monthlyCredits ?? 5;
+
+  // ── Phase 2: History state ──────────────────────────────────────────
+  const [historyItems, setHistoryItems]     = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError]     = useState('');
+
+  useEffect(() => {
+    if (activeTab !== 'history') return;
+    const load = async () => {
+      setHistoryLoading(true);
+      setHistoryError('');
+      try {
+        const res = await aiAPI.getHistory(1, 20);
+        setHistoryItems(res.data.data || []);
+      } catch {
+        setHistoryError('Failed to load history. Please try again.');
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    load();
+  }, [activeTab]);
 
   const planBadge = {
     Pro:        'bg-blue-500/15 text-blue-300 border-blue-500/25',
@@ -275,7 +301,7 @@ const Dashboard = () => {
                     <ToolCard icon={FileText} accent="brand" credits={1}
                       title="Resume Generator"
                       description="ATS-optimized resumes tailored to your target role."
-                      onClick={() => alert('Coming in Phase 2!')} disabled={credits === 0} />
+                      onClick={() => navigate('/resume')} disabled={credits === 0} />
                     <ToolCard icon={Mail} accent="blue" credits={1} badge="Soon"
                       title="Cover Letter"
                       description="Match your letter to any job posting automatically."
@@ -338,7 +364,7 @@ const Dashboard = () => {
                   <ToolCard icon={FileText} accent="brand" credits={1}
                     title="Resume Generator"
                     description="Generate ATS-optimized, role-specific resumes with GPT-powered language tailored to your experience."
-                    onClick={() => alert('Coming in Phase 2!')} disabled={credits === 0} />
+                    onClick={() => navigate('/resume')} disabled={credits === 0} />
                   <ToolCard icon={Mail} accent="blue" credits={1} badge="Soon"
                     title="Cover Letter Writer"
                     description="Craft personalized cover letters that match the exact requirements of any job posting."
@@ -351,14 +377,94 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* ───── PLACEHOLDER TABS ───── */}
-            {['history', 'billing', 'settings'].includes(activeTab) && (
+            {/* ───── HISTORY TAB ───── */}
+            {activeTab === 'history' && (
+              <div className="space-y-4 animate-fade-in">
+                <div>
+                  <h2 className="text-lg font-bold text-white mb-0.5">Generation History</h2>
+                  <p className="text-slate-500 text-sm">All your AI-generated documents</p>
+                </div>
+
+                {historyLoading && (
+                  <div className="flex justify-center py-20">
+                    <Loader2 className="w-7 h-7 text-brand-400 animate-spin" />
+                  </div>
+                )}
+
+                {historyError && (
+                  <p className="text-red-400 text-sm text-center py-10">{historyError}</p>
+                )}
+
+                {!historyLoading && !historyError && historyItems.length === 0 && (
+                  <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl py-14 text-center">
+                    <div className="w-11 h-11 bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <FileText className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <p className="text-slate-400 text-sm font-medium">No documents yet</p>
+                    <p className="text-slate-600 text-xs mt-1 mb-4">Generate your first AI resume to get started</p>
+                    <button onClick={() => navigate('/resume')} className="btn-primary text-xs px-4 py-2 mx-auto">
+                      <Plus className="w-3 h-3" /> Create document
+                    </button>
+                  </div>
+                )}
+
+                {!historyLoading && historyItems.length > 0 && (
+                  <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl overflow-hidden divide-y divide-dark-700/40">
+                    {historyItems.map((gen) => {
+                      const TYPE_LABELS = {
+                        RESUME:       { label: 'Resume',       color: 'text-brand-300 bg-brand-500/15 border-brand-500/30' },
+                        COVER_LETTER: { label: 'Cover Letter', color: 'text-blue-300 bg-blue-500/15 border-blue-500/30' },
+                        JOB_ANALYSIS: { label: 'Job Analysis', color: 'text-purple-300 bg-purple-500/15 border-purple-500/30' },
+                      };
+                      const t = TYPE_LABELS[gen.type] || { label: gen.type, color: 'text-slate-300 bg-dark-700 border-dark-600' };
+                      return (
+                        <div key={gen.id} className="flex items-center justify-between px-4 py-3.5 gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 bg-brand-500/8 border border-brand-500/15 rounded-lg flex items-center justify-center shrink-0">
+                              <FileText className="w-3.5 h-3.5 text-brand-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${t.color}`}>
+                                  {t.label}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {new Date(gen.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Zap className="w-3 h-3" /> {gen.creditsUsed} credit
+                                </span>
+                                {gen.processingMs && (
+                                  <span>{(gen.processingMs / 1000).toFixed(1)}s</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {gen.downloadUrl && (
+                            <a href={gen.downloadUrl} target="_blank" rel="noreferrer"
+                              className="btn-secondary text-xs py-1.5 px-3 gap-1.5 shrink-0">
+                              <Download className="w-3 h-3" /> PDF
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ───── PLACEHOLDER TABS (billing, settings) ───── */}
+            {['billing', 'settings'].includes(activeTab) && (
               <div className="flex flex-col items-center justify-center min-h-[45vh] text-center animate-fade-in">
                 <div className="w-12 h-12 bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center mb-3">
                   <Clock className="w-5 h-5 text-slate-600" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1 capitalize">{activeTab}</h3>
-                <p className="text-slate-500 text-xs max-w-[220px]">Coming in Phase 2 — stay tuned!</p>
+                <p className="text-slate-500 text-xs max-w-[220px]">Coming in Phase 3 — stay tuned!</p>
               </div>
             )}
 

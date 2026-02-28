@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Download, Copy, Check, RefreshCw, FileText, Clock, Zap } from 'lucide-react';
 
-const GeneratedOutput = ({ result, onRegenerate, isLoading }) => {
+const GeneratedOutput = ({ result, onRegenerate, isLoading, type = 'resume' }) => {
   const [copied, setCopied] = useState(false);
+
+  const TYPE_CONFIG = {
+    resume:       { label: 'Resume',        successMsg: 'Resume generated successfully!',       previewLabel: 'Generated Resume',       tip: '💡 Download the PDF for a formatted version. Copy the text to paste directly into job portals.' },
+    coverLetter:  { label: 'Cover Letter',  successMsg: 'Cover letter generated successfully!', previewLabel: 'Generated Cover Letter', tip: '💡 Download the PDF for a formatted version. Copy the text to personalize further.' },
+    jobAnalysis:  { label: 'Job Analysis',  successMsg: 'Job analysis complete!',               previewLabel: 'Job Analysis Results',   tip: '💡 Use these insights to tailor your resume and cover letter to this role.' },
+  };
+  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.resume;
 
   const copyText = async () => {
     await navigator.clipboard.writeText(result.text);
@@ -23,7 +30,7 @@ const GeneratedOutput = ({ result, onRegenerate, isLoading }) => {
       {/* Stats bar */}
       <div className="flex flex-wrap items-center gap-4 p-4 bg-green-500/10 border border-green-500/25 rounded-xl">
         <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
-          <Check className="w-4 h-4" /> Resume generated successfully!
+          <Check className="w-4 h-4" /> {cfg.successMsg}
         </div>
         <div className="flex items-center gap-3 ml-auto text-xs text-slate-400">
           <span className="flex items-center gap-1">
@@ -56,7 +63,7 @@ const GeneratedOutput = ({ result, onRegenerate, isLoading }) => {
       <div className="card">
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-dark-700">
           <FileText className="w-4 h-4 text-brand-400" />
-          <span className="text-sm font-semibold text-white">Generated Resume</span>
+          <span className="text-sm font-semibold text-white">{cfg.previewLabel}</span>
           <span className="text-xs text-slate-500 ml-auto">AI Model: {result.model}</span>
         </div>
         <pre className="whitespace-pre-wrap font-mono text-xs text-slate-300 leading-relaxed max-h-[500px] overflow-y-auto">
@@ -65,7 +72,7 @@ const GeneratedOutput = ({ result, onRegenerate, isLoading }) => {
       </div>
 
       <p className="text-xs text-slate-500 text-center">
-        💡 Download the PDF for a formatted version. Copy the text to paste directly into job portals.
+        {cfg.tip}
       </p>
     </div>
   );

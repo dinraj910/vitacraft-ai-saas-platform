@@ -5,14 +5,14 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import ResumeGenerator from './pages/ResumeGenerator';
+import ResumeGenerator      from './pages/ResumeGenerator';
+import CoverLetterGenerator from './pages/CoverLetterGenerator';
+import JobAnalyzer          from './pages/JobAnalyzer';
 import {
-  FileText, Mail, Briefcase, Zap, TrendingUp, LogOut,
+  FileText, Mail, Briefcase, Zap, TrendingUp,
   Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
-  ChevronRight, Bell, Menu, X, Clock, ArrowUpRight, Plus,
-  Loader2, Download,
+  Menu, X, ArrowUpRight, Check, Star, ArrowRight,
 } from 'lucide-react';
-import { aiAPI, filesAPI } from '../api/ai.api';
 import useAuthStore from './store/authStore';
 
 /* ─── Landing Page ─────────────────────────────────────────────────── */
@@ -308,6 +308,8 @@ const App = () => (
         <Route path="/register"  element={<Register />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/resume"    element={<ProtectedRoute><ResumeGenerator /></ProtectedRoute>} />
+        <Route path="/cover-letter" element={<ProtectedRoute><CoverLetterGenerator /></ProtectedRoute>} />
+        <Route path="/job-analyzer"  element={<ProtectedRoute><JobAnalyzer /></ProtectedRoute>} />
         <Route path="*"          element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

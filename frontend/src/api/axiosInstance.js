@@ -3,7 +3,7 @@ import useAuthStore from '../store/authStore';
 
 const axiosInstance = axios.create({
   baseURL: '/api/v1',
-  timeout: 15000,
+  timeout: 150000,   // 150s — AI generation via Ollama can take up to 120s
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });

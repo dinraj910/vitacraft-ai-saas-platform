@@ -184,8 +184,16 @@ const generateWithFallback = async (prompt, options = {}) => {
 // RESUME GENERATOR
 // ─────────────────────────────────────────────────────────────────────────────
 
-const buildResumePrompt = ({ name, jobTitle, experience, skills, education, summary }) => {
+const buildResumePrompt = ({ name, jobTitle, experience, skills, education, summary, tone, targetCompany, yearsOfExperience, certifications, languages, customInstructions }) => {
   const skillList = Array.isArray(skills) ? skills.join(', ') : skills;
+
+  let personalization = '';
+  if (tone)              personalization += `\n- Tone / Style: ${tone}`;
+  if (targetCompany)     personalization += `\n- Target Company: ${targetCompany}`;
+  if (yearsOfExperience) personalization += `\n- Years of Experience: ${yearsOfExperience}`;
+  if (certifications)    personalization += `\n- Certifications: ${certifications}`;
+  if (languages)         personalization += `\n- Languages: ${languages}`;
+
   return `
 Create a professional, ATS-optimized resume for the following person.
 
@@ -195,15 +203,16 @@ CANDIDATE DETAILS:
 - Professional Summary Input: ${summary || 'Not provided — write a strong one based on the experience'}
 - Work Experience: ${experience}
 - Skills: ${skillList}
-- Education: ${education}
+- Education: ${education}${personalization}
 
-STRICT OUTPUT RULES:
+${customInstructions ? `ADDITIONAL INSTRUCTIONS FROM CANDIDATE:\n${customInstructions}\n` : ''}STRICT OUTPUT RULES:
 - Use ONLY plain text — no markdown, no asterisks, no hash symbols
-- Section headers must be in ALL CAPS (SUMMARY, EXPERIENCE, SKILLS, EDUCATION)
+- Section headers must be in ALL CAPS (SUMMARY, EXPERIENCE, SKILLS, EDUCATION${certifications ? ', CERTIFICATIONS' : ''}${languages ? ', LANGUAGES' : ''})
 - Use bullet points with the • character
 - Do NOT use placeholder text like [Company Name]
 - Keep it concise, professional, and ATS-friendly
 - Start directly with the candidate's name
+${tone ? `- Write in a ${tone} tone throughout` : ''}
 
 OUTPUT FORMAT:
 ${name.toUpperCase()}
@@ -223,6 +232,7 @@ SKILLS
 
 EDUCATION
 Degree | Institution | Year
+${certifications ? '\nCERTIFICATIONS\n• List certifications here' : ''}${languages ? '\nLANGUAGES\n• List languages here' : ''}
 `.trim();
 };
 
@@ -240,7 +250,7 @@ const generateResume = async (userInput) => {
 // COVER LETTER GENERATOR
 // ─────────────────────────────────────────────────────────────────────────────
 
-const buildCoverLetterPrompt = ({ name, jobTitle, company, experience, skills, whyCompany }) => {
+const buildCoverLetterPrompt = ({ name, jobTitle, company, experience, skills, whyCompany, tone, hiringManager, achievements, customInstructions }) => {
   const skillList = Array.isArray(skills) ? skills.join(', ') : skills;
   return `
 Write a professional cover letter for a job application.
@@ -249,13 +259,13 @@ APPLICANT: ${name}
 APPLYING FOR: ${jobTitle} at ${company}
 EXPERIENCE: ${experience}
 SKILLS: ${skillList}
-WHY THIS COMPANY: ${whyCompany || 'passionate about the mission and growth opportunities'}
+WHY THIS COMPANY: ${whyCompany || 'passionate about the mission and growth opportunities'}${hiringManager ? `\nHIRING MANAGER: ${hiringManager}` : ''}${achievements ? `\nKEY ACHIEVEMENTS TO HIGHLIGHT: ${achievements}` : ''}
 
-RULES:
+${customInstructions ? `ADDITIONAL INSTRUCTIONS:\n${customInstructions}\n` : ''}RULES:
 - 3 paragraphs: strong opening hook, experience body, confident closing
-- Professional but personable tone
+- ${tone ? `Write in a ${tone} tone` : 'Professional but personable tone'}
 - Plain text only — no markdown
-- Address to "Hiring Manager" if no name given
+- ${hiringManager ? `Address to "${hiringManager}"` : 'Address to "Hiring Manager" if no name given'}
 - End with a call to action
 `.trim();
 };
@@ -274,16 +284,17 @@ const generateCoverLetter = async (userInput) => {
 // JOB DESCRIPTION ANALYZER
 // ─────────────────────────────────────────────────────────────────────────────
 
-const buildJobAnalysisPrompt = ({ jobDescription, skills }) => {
+const buildJobAnalysisPrompt = ({ jobDescription, skills, targetRole, experienceLevel, industry, customInstructions }) => {
+  const skillList = Array.isArray(skills) ? skills.join(', ') : skills;
   return `
 Analyze this job description and provide a structured career coaching report.
 
 JOB DESCRIPTION:
 ${jobDescription}
 
-CANDIDATE SKILLS: ${skills || 'Not provided'}
+CANDIDATE SKILLS: ${skillList || 'Not provided'}${targetRole ? `\nTARGET ROLE: ${targetRole}` : ''}${experienceLevel ? `\nEXPERIENCE LEVEL: ${experienceLevel}` : ''}${industry ? `\nINDUSTRY: ${industry}` : ''}
 
-Provide this exact structure:
+${customInstructions ? `ADDITIONAL ANALYSIS INSTRUCTIONS:\n${customInstructions}\n` : ''}Provide this exact structure:
 KEY REQUIREMENTS
 • List the top 5 must-have requirements
 
@@ -293,9 +304,9 @@ ATS KEYWORDS
 SKILL MATCH
 • Skills the candidate already has that match
 • Skills that are missing or need development
-
+${experienceLevel ? `\nEXPERIENCE FIT\n• How well the ${experienceLevel}-level experience aligns with this role` : ''}
 RECOMMENDATIONS
-• 3 specific, actionable tips to improve the resume for this role
+• 3 specific, actionable tips to improve the resume for this role${targetRole ? `, tailored for the ${targetRole} position` : ''}
 
 Plain text only. Use • for bullets.
 `.trim();

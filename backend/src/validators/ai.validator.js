@@ -33,8 +33,16 @@ const resumeSchema = z.object({
 
   summary: z
     .string()
-    .max(500)
+    .max(2000)
     .optional(),
+
+  // Personalization options
+  tone:              z.string().max(50).optional(),
+  targetCompany:     z.string().max(100).optional(),
+  yearsOfExperience: z.string().max(20).optional(),
+  certifications:    z.string().max(500).optional(),
+  languages:         z.string().max(200).optional(),
+  customInstructions:z.string().max(500).optional(),
 });
 
 const coverLetterSchema = z.object({
@@ -44,6 +52,12 @@ const coverLetterSchema = z.object({
   experience: z.string().min(20).max(2000).trim(),
   skills:     z.union([z.array(z.string()), z.string().min(2)]),
   whyCompany: z.string().max(500).optional(),
+
+  // Personalization options
+  tone:              z.string().max(50).optional(),
+  hiringManager:     z.string().max(100).optional(),
+  achievements:      z.string().max(500).optional(),
+  customInstructions:z.string().max(500).optional(),
 });
 
 const jobAnalysisSchema = z.object({
@@ -53,7 +67,18 @@ const jobAnalysisSchema = z.object({
     .max(5000)
     .trim(),
 
-  skills: z.string().max(500).optional(),
+  skills: z
+    .union([
+      z.array(z.string()),
+      z.string().max(500),
+    ])
+    .optional(),
+
+  // Personalization options
+  targetRole:        z.string().max(100).optional(),
+  experienceLevel:   z.string().max(50).optional(),
+  industry:          z.string().max(100).optional(),
+  customInstructions:z.string().max(500).optional(),
 });
 
 module.exports = { resumeSchema, coverLetterSchema, jobAnalysisSchema };

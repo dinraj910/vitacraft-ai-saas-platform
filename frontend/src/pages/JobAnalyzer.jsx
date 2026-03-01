@@ -29,7 +29,8 @@ const JobAnalyzer = () => {
       setResult({
         text:             data.text,
         processingMs:     data.processingMs,
-        model:            'phi3:mini',
+        model:            data.model || 'AI',
+        provider:         data.provider,
         creditsRemaining: meta.creditsRemaining,
         // No downloadUrl — job analysis is text-only, no PDF
       });
@@ -38,10 +39,13 @@ const JobAnalyzer = () => {
 
     } catch (err) {
       const code = err.response?.data?.error?.code;
+      const details = err.response?.data?.error?.details;
       if (code === 'INSUFFICIENT_CREDITS') {
         setError('You have no credits remaining. Please upgrade your plan to continue.');
       } else if (code === 'AI_SERVICE_UNAVAILABLE') {
-        setError('The AI service is starting up. Please wait 30 seconds and try again.');
+        setError('The AI service is temporarily unavailable. Please try again in a moment.');
+      } else if (code === 'VALIDATION_ERROR' && Array.isArray(details)) {
+        setError(details.map((d) => `${d.field}: ${d.message}`).join('\n'));
       } else {
         setError(err.response?.data?.message || 'Analysis failed. Please try again.');
       }
@@ -110,7 +114,7 @@ const JobAnalyzer = () => {
         {error && (
           <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-6">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-red-300 text-sm">{error}</p>
+            <p className="text-red-300 text-sm whitespace-pre-line">{error}</p>
           </div>
         )}
 

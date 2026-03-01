@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Plus, X, Briefcase, Loader2 } from 'lucide-react';
+import { Plus, X, Briefcase, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const INITIAL = {
   jobDescription: '',
   skills: [],
+  // Optional personalization fields
+  targetRole: '',
+  experienceLevel: '',
+  industry: '',
+  customInstructions: '',
 };
 
 const JobAnalyzerForm = ({ onSubmit, isLoading }) => {
   const [form, setForm]           = useState(INITIAL);
   const [skillInput, setSkillInput] = useState('');
   const [errors, setErrors]       = useState({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -89,12 +95,68 @@ const JobAnalyzerForm = ({ onSubmit, isLoading }) => {
         )}
       </div>
 
+      {/* Advanced / Personalization toggle */}
+      <div className="border-t border-dark-700 pt-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-300 transition-colors w-full"
+        >
+          {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <span className="font-medium">Personalization Options</span>
+          <span className="text-xs text-slate-600">(optional — improves analysis)</span>
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 space-y-4 pl-1 border-l-2 border-purple-500/20 ml-2">
+            <div className="pl-4 space-y-4">
+              {/* Target Role + Experience Level */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="input-label">Your Target Role</label>
+                  <input name="targetRole" value={form.targetRole} onChange={onChange}
+                    placeholder="e.g., Senior Frontend Developer"
+                    className="input-field" />
+                </div>
+                <div>
+                  <label className="input-label">Experience Level</label>
+                  <select name="experienceLevel" value={form.experienceLevel} onChange={onChange} className="input-field">
+                    <option value="">Not specified</option>
+                    <option value="entry">Entry Level (0–2 years)</option>
+                    <option value="mid">Mid Level (3–5 years)</option>
+                    <option value="senior">Senior (5–8 years)</option>
+                    <option value="lead">Lead / Staff (8+ years)</option>
+                    <option value="executive">Director / Executive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Industry */}
+              <div>
+                <label className="input-label">Industry</label>
+                <input name="industry" value={form.industry} onChange={onChange}
+                  placeholder="e.g., Fintech, Healthcare, SaaS, E-commerce"
+                  className="input-field" />
+              </div>
+
+              {/* Custom Instructions */}
+              <div>
+                <label className="input-label">Custom Instructions</label>
+                <textarea name="customInstructions" value={form.customInstructions} onChange={onChange} rows={2}
+                  placeholder="e.g., 'Focus on remote work compatibility', 'Check if my skills match for a career switch from backend to fullstack'"
+                  className="input-field resize-none" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Submit */}
       <button type="submit" disabled={isLoading} className="btn-primary w-full py-4 text-base">
         {isLoading ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            AI is analyzing the job description... (30–60 seconds)
+            AI is analyzing the job description... (3–10 seconds)
           </>
         ) : (
           <>

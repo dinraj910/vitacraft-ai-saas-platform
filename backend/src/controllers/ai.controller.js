@@ -78,6 +78,8 @@ const generateResumeHandler = asyncHandler(async (req, res) => {
       text:         aiResult.text,
       s3Key,
       processingMs: aiResult.processingMs,
+      model:        aiResult.model,
+      provider:     aiResult.provider,
     },
     { creditsRemaining: updatedAccount.balance }
   );
@@ -119,7 +121,7 @@ const generateCoverLetterHandler = asyncHandler(async (req, res) => {
   const updatedAccount = await deductCredit(userId, CREDIT_COST, 'AI_GENERATION', generation.id);
 
   return sendSuccess(res, 200, 'Cover letter generated!',
-    { generationId: generation.id, text: aiResult.text, s3Key, processingMs: aiResult.processingMs },
+    { generationId: generation.id, text: aiResult.text, s3Key, processingMs: aiResult.processingMs, model: aiResult.model, provider: aiResult.provider },
     { creditsRemaining: updatedAccount.balance }
   );
 });
@@ -147,7 +149,7 @@ const analyzeJobHandler = asyncHandler(async (req, res) => {
   const updatedAccount = await deductCredit(userId, CREDIT_COST, 'AI_GENERATION', generation.id);
 
   return sendSuccess(res, 200, 'Job description analyzed!',
-    { generationId: generation.id, text: aiResult.text, processingMs: aiResult.processingMs },
+    { generationId: generation.id, text: aiResult.text, processingMs: aiResult.processingMs, model: aiResult.model, provider: aiResult.provider },
     { creditsRemaining: updatedAccount.balance }
   );
 });
@@ -171,13 +173,29 @@ const getHistoryHandler = asyncHandler(async (req, res) => {
         id: true, type: true, model: true,
         creditsUsed: true, processingMs: true,
         s3Key: true, createdAt: true,
-        prompt: true,
+        prompt: true, response: true,
       },
     }),
     prisma.generation.count({ where: { userId } }),
   ]);
 
-  return sendSuccess(res, 200, 'Generation history retrieved', generations, {
+  // Attach signed download URLs for items that have PDFs in S3
+  const { getSignedDownloadUrl } = require('../services/s3.service');
+  const enriched = await Promise.all(
+    generations.map(async (gen) => {
+      let downloadUrl = null;
+      if (gen.s3Key) {
+        try {
+          downloadUrl = await getSignedDownloadUrl(gen.s3Key);
+        } catch {
+          // S3 URL generation failed — skip silently
+        }
+      }
+      return { ...gen, downloadUrl };
+    })
+  );
+
+  return sendSuccess(res, 200, 'Generation history retrieved', enriched, {
     page, limit, total, totalPages: Math.ceil(total / limit),
   });
 });

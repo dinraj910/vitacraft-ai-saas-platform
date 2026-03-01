@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Plus, X, Mail, Loader2 } from 'lucide-react';
+import { Plus, X, Mail, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const INITIAL = {
   name: '', jobTitle: '', company: '',
   experience: '', whyCompany: '', skills: [],
+  // Optional personalization fields
+  tone: '',
+  hiringManager: '',
+  achievements: '',
+  customInstructions: '',
 };
 
 const CoverLetterForm = ({ onSubmit, isLoading }) => {
   const [form, setForm]           = useState(INITIAL);
   const [skillInput, setSkillInput] = useState('');
   const [errors, setErrors]       = useState({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -37,6 +43,7 @@ const CoverLetterForm = ({ onSubmit, isLoading }) => {
     if (!form.jobTitle.trim())   e.jobTitle   = 'Target job title is required';
     if (!form.company.trim())    e.company    = 'Company name is required';
     if (!form.experience.trim()) e.experience = 'Work experience is required';
+    else if (form.experience.trim().length < 20) e.experience = 'Please provide more detail (at least 20 characters)';
     if (form.skills.length === 0) e.skills    = 'Add at least one skill';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -125,12 +132,67 @@ const CoverLetterForm = ({ onSubmit, isLoading }) => {
           className="input-field resize-none" />
       </div>
 
+      {/* Advanced / Personalization toggle */}
+      <div className="border-t border-dark-700 pt-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-300 transition-colors w-full"
+        >
+          {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <span className="font-medium">Personalization Options</span>
+          <span className="text-xs text-slate-600">(optional — improves results)</span>
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 space-y-4 pl-1 border-l-2 border-blue-500/20 ml-2">
+            <div className="pl-4 space-y-4">
+              {/* Tone + Hiring Manager */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="input-label">Letter Tone</label>
+                  <select name="tone" value={form.tone} onChange={onChange} className="input-field">
+                    <option value="">Auto (Professional)</option>
+                    <option value="formal">Formal & Corporate</option>
+                    <option value="enthusiastic">Enthusiastic & Passionate</option>
+                    <option value="confident">Confident & Direct</option>
+                    <option value="creative">Creative & Storytelling</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="input-label">Hiring Manager Name</label>
+                  <input name="hiringManager" value={form.hiringManager} onChange={onChange}
+                    placeholder="e.g., Sarah Chen (leave blank for 'Hiring Manager')"
+                    className="input-field" />
+                </div>
+              </div>
+
+              {/* Key Achievements */}
+              <div>
+                <label className="input-label">Key Achievement to Highlight</label>
+                <textarea name="achievements" value={form.achievements} onChange={onChange} rows={2}
+                  placeholder="e.g., Increased revenue by 30% through a new feature I designed and shipped"
+                  className="input-field resize-none" />
+              </div>
+
+              {/* Custom Instructions */}
+              <div>
+                <label className="input-label">Custom Instructions</label>
+                <textarea name="customInstructions" value={form.customInstructions} onChange={onChange} rows={2}
+                  placeholder="Any special requests? e.g., 'Mention my open source contributions', 'Keep it under 300 words'"
+                  className="input-field resize-none" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Submit */}
       <button type="submit" disabled={isLoading} className="btn-primary w-full py-4 text-base">
         {isLoading ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            AI is writing your cover letter... (30–60 seconds)
+            AI is writing your cover letter... (3–10 seconds)
           </>
         ) : (
           <>

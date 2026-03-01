@@ -5,6 +5,12 @@ const logger = require('../utils/logger');
 
 const SALT_ROUNDS = 12;
 
+const USER_PROFILE_SELECT = {
+  id: true, name: true, email: true, role: true, isEmailVerified: true, createdAt: true,
+  creditAccount: { select: { balance: true, totalUsed: true } },
+  subscription: { select: { status: true, currentPeriodEnd: true, plan: { select: { name: true, displayName: true, monthlyCredits: true, priceUSD: true } } } },
+};
+
 const registerUser = async ({ name, email, password }) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -33,7 +39,12 @@ const registerUser = async ({ name, email, password }) => {
     data: { token: tokenId, userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
   });
 
-  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, accessToken, refreshToken, tokenId };
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: USER_PROFILE_SELECT,
+  });
+
+  return { user: fullUser, accessToken, refreshToken, tokenId };
 };
 
 const loginUser = async ({ email, password }) => {
@@ -56,7 +67,12 @@ const loginUser = async ({ email, password }) => {
     prisma.refreshToken.create({ data: { token: tokenId, userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } }),
   ]);
 
-  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, accessToken, refreshToken, tokenId };
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: USER_PROFILE_SELECT,
+  });
+
+  return { user: fullUser, accessToken, refreshToken, tokenId };
 };
 
 const refreshAccessToken = async (refreshToken, tokenId) => {
@@ -78,7 +94,8 @@ const refreshAccessToken = async (refreshToken, tokenId) => {
     prisma.refreshToken.create({ data: { token: newTokenId, userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } }),
   ]);
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken, tokenId: newTokenId, user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+  const fullUser = await prisma.user.findUnique({ where: { id: user.id }, select: USER_PROFILE_SELECT });
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken, tokenId: newTokenId, user: fullUser };
 };
 
 const logoutUser = async (tokenId) => {
@@ -89,11 +106,7 @@ const logoutUser = async (tokenId) => {
 const getCurrentUser = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true, name: true, email: true, role: true, isEmailVerified: true, createdAt: true,
-      creditAccount: { select: { balance: true, totalUsed: true } },
-      subscription: { select: { status: true, currentPeriodEnd: true, plan: { select: { name: true, displayName: true, monthlyCredits: true, priceUSD: true } } } },
-    },
+    select: USER_PROFILE_SELECT,
   });
   if (!user) { const err = new Error('User not found'); err.status = 404; throw err; }
   return user;

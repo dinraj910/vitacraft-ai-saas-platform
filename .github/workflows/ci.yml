@@ -60,6 +60,13 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
       
+      - name: Seed database
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: node prisma/seed.js
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
+      
       - name: Run tests
         working-directory: ${{ env.BACKEND_DIR }}
         run: npm test
@@ -67,8 +74,10 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
           NODE_ENV: test
-          JWT_SECRET: test-secret-key-for-ci
-          JWT_EXPIRE: 7d
+          JWT_ACCESS_SECRET: test-access-secret-for-ci
+          JWT_REFRESH_SECRET: test-refresh-secret-for-ci
+          JWT_ACCESS_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
       
       - name: Upload coverage
         uses: actions/upload-artifact@v4

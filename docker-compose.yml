@@ -1,29 +1,52 @@
 version: '3.8'
 
-services:
-  frontend:
-    image: yourdockerhubuser/vitacraft-frontend:latest
-    container_name: vitacraft-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - vitacraft-network
-    restart: unless-stopped
+# ─────────────────────────────────────────────────────────────────────────────
+#  VitaCraft AI — Production Docker Compose
+#  Usage on EC2:
+#    1. Copy .env.production to .env  (fill in real values)
+#    2. docker compose pull
+#    3. docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
 
+services:
+
+  # ── Node.js / Express API ────────────────────────────────────────────────
   backend:
-    image: yourdockerhubuser/vitacraft-backend:latest
+    image: dinraj910/vitacraft-backend:latest
     container_name: vitacraft-backend
     ports:
-      - "5000:5000"
+      - "5000:5000"                 # Exposed for direct debugging; can be removed in strict prod
     env_file:
-      - .env
+      - .env                        # Put your real secrets here on the EC2 instance
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
     networks:
       - vitacraft-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s             # Allow time for migrations to run on first boot
+
+  # ── React (Nginx) Front-end ──────────────────────────────────────────────
+  frontend:
+    image: dinraj910/vitacraft-frontend:latest
+    container_name: vitacraft-frontend
+    ports:
+      - "80:80"                     # Public HTTP port
+    depends_on:
+      backend:
+        condition: service_healthy  # Wait until backend migrations finish
+    networks:
+      - vitacraft-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   vitacraft-network:

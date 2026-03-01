@@ -1,0 +1,31 @@
+node_modules
+npm-debug.log*
+.npm
+
+# Environment files — never bake secrets into an image
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Git
+.git
+.gitignore
+
+# Tests & CI
+tests/
+coverage/
+.nyc_output
+jest.config.*
+
+# Dev tooling
+.eslintrc*
+.prettierrc*
+nodemon.json
+
+# OS
+.DS_Store
+Thumbs.db

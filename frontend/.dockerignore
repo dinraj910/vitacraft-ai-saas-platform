@@ -1,0 +1,20 @@
+node_modules
+npm-debug.log*
+.npm
+
+# Built output (built inside Docker, not from host)
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Dev / OS junk
+.DS_Store
+Thumbs.db
+*.local

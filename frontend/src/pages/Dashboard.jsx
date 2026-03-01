@@ -4,11 +4,13 @@ import {
   FileText, Mail, Briefcase, Zap, TrendingUp, LogOut,
   Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
   ChevronRight, Bell, Menu, X, Clock, ArrowUpRight, Plus,
-  Loader2, Download,
+  Loader2, Download, Check, AlertCircle, ExternalLink, User,
+  Lock, Eye, EyeOff,
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useAuthStore from '../store/authStore';
-import { aiAPI, filesAPI } from '../api/ai.api';
+import { aiAPI, filesAPI, billingAPI } from '../api/ai.api';
+import { authAPI } from '../api/auth.api';
 
 
 /* ─── Credit Bar ─── */
@@ -477,19 +479,440 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* ───── PLACEHOLDER TABS (billing, settings) ───── */}
-            {['billing', 'settings'].includes(activeTab) && (
-              <div className="flex flex-col items-center justify-center min-h-[45vh] text-center animate-fade-in">
-                <div className="w-12 h-12 bg-dark-800 border border-dark-700 rounded-xl flex items-center justify-center mb-3">
-                  <Clock className="w-5 h-5 text-slate-600" />
-                </div>
-                <h3 className="text-sm font-semibold text-white mb-1 capitalize">{activeTab}</h3>
-                <p className="text-slate-500 text-xs max-w-[220px]">Coming in Phase 3 — stay tuned!</p>
-              </div>
+            {/* ───── BILLING TAB ───── */}
+            {activeTab === 'billing' && (
+              <BillingTab credits={credits} totalCredits={totalCredits} plan={plan} planBadge={planBadge} />
+            )}
+
+            {/* ───── SETTINGS TAB ───── */}
+            {activeTab === 'settings' && (
+              <SettingsTab user={user} />
             )}
 
           </div>
         </main>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   BILLING TAB
+   ════════════════════════════════════════════════════════════════════ */
+const PLAN_FEATURES = {
+  FREE:       ['5 credits/month', 'Resume Generator', 'Cover Letter Writer', 'Job Analyzer', 'PDF Export'],
+  PRO:        ['50 credits/month', 'All Free features', 'Priority AI models', 'Generation history', 'Email support'],
+  ENTERPRISE: ['200 credits/month', 'All Pro features', 'Dedicated support', 'Custom templates', 'API access'],
+};
+
+const PLAN_PRICES = { FREE: 0, PRO: 9.99, ENTERPRISE: 29.99 };
+
+const BillingTab = ({ credits, totalCredits, plan, planBadge }) => {
+  const [subscription, setSubscription] = useState(null);
+  const [plans, setPlans]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState('');
+  const [portalLoading, setPortalLoading]     = useState(false);
+  const [error, setError]               = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [subRes, plansRes] = await Promise.all([
+          billingAPI.getSubscription(),
+          billingAPI.getPlans(),
+        ]);
+        setSubscription(subRes.data.data);
+        setPlans(plansRes.data.data || []);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load billing info');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const handleUpgrade = async (planName) => {
+    setCheckoutLoading(planName);
+    setError('');
+    try {
+      const res = await billingAPI.createCheckoutSession(planName);
+      const { url } = res.data.data;
+      if (url) window.location.href = url;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create checkout session');
+    } finally {
+      setCheckoutLoading('');
+    }
+  };
+
+  const handleManage = async () => {
+    setPortalLoading(true);
+    setError('');
+    try {
+      const res = await billingAPI.createPortalSession();
+      const { url } = res.data.data;
+      if (url) window.location.href = url;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to open billing portal');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20 animate-fade-in">
+        <Loader2 className="w-7 h-7 text-brand-400 animate-spin" />
+      </div>
+    );
+  }
+
+  const currentPlanName = subscription?.plan?.name || 'FREE';
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div>
+        <h2 className="text-lg font-bold text-white mb-0.5">Billing & Subscription</h2>
+        <p className="text-slate-500 text-sm">Manage your plan, credits, and payment method</p>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-300">
+          <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+        </div>
+      )}
+
+      {/* Current Plan Overview */}
+      <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl p-5">
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <div>
+            <p className="text-slate-500 text-xs mb-1">Current Plan</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-white text-xl font-bold">{plan}</h3>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${planBadge}`}>Active</span>
+            </div>
+            {subscription?.status === 'ACTIVE' && currentPlanName !== 'FREE' && (
+              <p className="text-slate-500 text-xs mt-1">
+                Renews {subscription.currentPeriodEnd
+                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                  : 'monthly'}
+              </p>
+            )}
+          </div>
+          {currentPlanName !== 'FREE' && (
+            <button onClick={handleManage} disabled={portalLoading}
+              className="btn-secondary text-xs py-2 px-4 gap-1.5">
+              {portalLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ExternalLink className="w-3 h-3" />}
+              Manage Subscription
+            </button>
+          )}
+        </div>
+
+        {/* Credits Bar */}
+        <div className="bg-dark-800/60 rounded-lg p-3.5">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-slate-400 text-xs flex items-center gap-1"><Zap className="w-3 h-3 text-brand-400" /> Credits</span>
+            <span className="text-white text-sm font-bold tabular-nums">{credits} <span className="text-slate-500 font-normal text-xs">/ {totalCredits}</span></span>
+          </div>
+          <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${
+                credits / totalCredits > 0.6 ? 'from-green-500 to-green-400' :
+                credits / totalCredits > 0.25 ? 'from-brand-500 to-brand-400' :
+                'from-red-500 to-red-400'
+              }`}
+              style={{ width: `${totalCredits > 0 ? Math.min((credits / totalCredits) * 100, 100) : 0}%` }}
+            />
+          </div>
+          <p className="text-slate-600 text-[11px] mt-1.5">Credits reset each billing cycle</p>
+        </div>
+      </div>
+
+      {/* Plans Grid */}
+      <div>
+        <h3 className="text-sm font-semibold text-white mb-3">Available Plans</h3>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {['FREE', 'PRO', 'ENTERPRISE'].map((pName) => {
+            const isCurrent = currentPlanName === pName;
+            const price     = PLAN_PRICES[pName];
+            const features  = PLAN_FEATURES[pName];
+            const isPopular = pName === 'PRO';
+
+            return (
+              <div key={pName}
+                className={`relative bg-dark-900/80 border rounded-xl p-5 transition-all ${
+                  isCurrent ? 'border-brand-500/40 ring-1 ring-brand-500/20' :
+                  isPopular ? 'border-blue-500/30 hover:border-blue-500/50' :
+                  'border-dark-700/50 hover:border-dark-600/60'
+                }`}>
+                {isPopular && !isCurrent && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-blue-500 text-white px-3 py-0.5 rounded-full font-semibold">
+                    Popular
+                  </span>
+                )}
+                <div className="mb-4">
+                  <h4 className="text-white font-semibold text-sm mb-1">{pName.charAt(0) + pName.slice(1).toLowerCase()}</h4>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold text-white">${price}</span>
+                    {price > 0 && <span className="text-slate-500 text-xs">/month</span>}
+                  </div>
+                </div>
+                <div className="space-y-2 mb-5">
+                  {features.map((f) => (
+                    <div key={f} className="flex items-center gap-2 text-xs text-slate-400">
+                      <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                {isCurrent ? (
+                  <button disabled className="w-full text-center py-2 rounded-lg text-xs font-semibold bg-brand-500/10 text-brand-300 border border-brand-500/20 cursor-default">
+                    Current Plan
+                  </button>
+                ) : pName === 'FREE' ? (
+                  <button disabled className="w-full text-center py-2 rounded-lg text-xs font-medium bg-dark-800 text-slate-500 border border-dark-700 cursor-default">
+                    Default
+                  </button>
+                ) : (
+                  <button onClick={() => handleUpgrade(pName)}
+                    disabled={!!checkoutLoading}
+                    className={`w-full text-center py-2 rounded-lg text-xs font-semibold transition-colors ${
+                      isPopular
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : 'bg-brand-500 hover:bg-brand-600 text-white'
+                    }`}>
+                    {checkoutLoading === pName ? (
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Redirecting…
+                      </span>
+                    ) : (
+                      `Upgrade to ${pName.charAt(0) + pName.slice(1).toLowerCase()}`
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Recent Transactions */}
+      {subscription?.recentTransactions?.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-white mb-3">Recent Transactions</h3>
+          <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl overflow-hidden divide-y divide-dark-700/40">
+            {subscription.recentTransactions.map((txn) => (
+              <div key={txn.id} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
+                    txn.type === 'EARNED' || txn.type === 'BONUS'
+                      ? 'bg-green-500/8 border-green-500/15'
+                      : 'bg-red-500/8 border-red-500/15'
+                  }`}>
+                    <Zap className={`w-3.5 h-3.5 ${
+                      txn.type === 'EARNED' || txn.type === 'BONUS' ? 'text-green-400' : 'text-red-400'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">{txn.description || txn.type}</p>
+                    <p className="text-slate-600 text-[11px]">
+                      {new Date(txn.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+                <span className={`text-sm font-semibold tabular-nums ${
+                  txn.amount > 0 ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {txn.amount > 0 ? '+' : ''}{txn.amount}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Test Mode Notice */}
+      <div className="bg-yellow-500/5 border border-yellow-500/15 rounded-lg px-4 py-3 flex items-start gap-2.5">
+        <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-yellow-300 text-xs font-semibold mb-0.5">Stripe Test Mode</p>
+          <p className="text-yellow-200/60 text-[11px] leading-relaxed">
+            Payments are in <span className="font-semibold">test mode</span>. Use card <span className="font-mono text-yellow-300/80">4242 4242 4242 4242</span> with
+            any future expiry and CVC. No real charges will be made.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   SETTINGS TAB
+   ════════════════════════════════════════════════════════════════════ */
+const SettingsTab = ({ user }) => {
+  const { logout } = useAuth();
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: '', newPass: '', confirm: '' });
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew]         = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    setPasswordMsg({ type: '', text: '' });
+
+    if (passwordData.newPass.length < 8) {
+      setPasswordMsg({ type: 'error', text: 'New password must be at least 8 characters.' });
+      return;
+    }
+    if (passwordData.newPass !== passwordData.confirm) {
+      setPasswordMsg({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+
+    // Note: Password change API not yet implemented — show info message
+    setPasswordMsg({ type: 'info', text: 'Password change functionality will be available soon.' });
+    setPasswordData({ current: '', newPass: '', confirm: '' });
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-lg font-bold text-white mb-0.5">Settings</h2>
+        <p className="text-slate-500 text-sm">Manage your account and preferences</p>
+      </div>
+
+      {/* Profile Info */}
+      <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
+          <User className="w-4 h-4 text-brand-400" /> Profile Information
+        </h3>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Full Name</label>
+            <div className="bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white">
+              {user?.name || 'N/A'}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Email Address</label>
+            <div className="bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white">
+              {user?.email || 'N/A'}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Role</label>
+            <div className="bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white capitalize">
+              {user?.role?.toLowerCase() || 'user'}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Member Since</label>
+            <div className="bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white">
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                : 'N/A'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security */}
+      <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
+          <Lock className="w-4 h-4 text-brand-400" /> Security
+        </h3>
+
+        {!showPasswordForm ? (
+          <button onClick={() => setShowPasswordForm(true)}
+            className="btn-secondary text-xs py-2 px-4 gap-1.5">
+            <Lock className="w-3 h-3" /> Change Password
+          </button>
+        ) : (
+          <form onSubmit={handlePasswordChange} className="space-y-3 max-w-sm">
+            <div>
+              <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Current Password</label>
+              <div className="relative">
+                <input
+                  type={showCurrent ? 'text' : 'password'}
+                  value={passwordData.current}
+                  onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                  className="w-full bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white pr-10 focus:outline-none focus:border-brand-500/50"
+                  required
+                />
+                <button type="button" onClick={() => setShowCurrent(!showCurrent)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">New Password</label>
+              <div className="relative">
+                <input
+                  type={showNew ? 'text' : 'password'}
+                  value={passwordData.newPass}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPass: e.target.value })}
+                  className="w-full bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white pr-10 focus:outline-none focus:border-brand-500/50"
+                  required
+                  minLength={8}
+                />
+                <button type="button" onClick={() => setShowNew(!showNew)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1 block">Confirm New Password</label>
+              <input
+                type="password"
+                value={passwordData.confirm}
+                onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                className="w-full bg-dark-800/60 border border-dark-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500/50"
+                required
+              />
+            </div>
+
+            {passwordMsg.text && (
+              <p className={`text-xs flex items-center gap-1.5 ${
+                passwordMsg.type === 'error' ? 'text-red-400' :
+                passwordMsg.type === 'success' ? 'text-green-400' :
+                'text-blue-400'
+              }`}>
+                <AlertCircle className="w-3 h-3" /> {passwordMsg.text}
+              </p>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <button type="submit" className="btn-primary text-xs py-2 px-4">Save Password</button>
+              <button type="button" onClick={() => { setShowPasswordForm(false); setPasswordMsg({ type: '', text: '' }); }}
+                className="btn-secondary text-xs py-2 px-4">Cancel</button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* Account Actions */}
+      <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-4">
+          <Settings className="w-4 h-4 text-brand-400" /> Account
+        </h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-medium">Sign Out</p>
+              <p className="text-slate-500 text-xs">Sign out of your account on this device</p>
+            </div>
+            <button onClick={logout} className="btn-secondary text-xs py-2 px-4 gap-1.5 text-red-400 hover:text-red-300 hover:border-red-500/30">
+              <LogOut className="w-3 h-3" /> Sign Out
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

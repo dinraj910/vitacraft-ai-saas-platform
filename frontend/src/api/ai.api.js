@@ -24,3 +24,21 @@ export const filesAPI = {
   deleteFile: (fileId) =>
     axiosInstance.delete(`/files/${fileId}`),
 };
+
+export const billingAPI = {
+  /** Get all available plans */
+  getPlans: () =>
+    axiosInstance.get('/billing/plans'),
+
+  /** Create a Stripe Checkout session for plan upgrade */
+  createCheckoutSession: (planName) =>
+    axiosInstance.post('/billing/create-checkout-session', { planName }),
+
+  /** Create a Stripe Billing Portal session (manage subscription) */
+  createPortalSession: () =>
+    axiosInstance.post('/billing/create-portal-session'),
+
+  /** Get current user's subscription details */
+  getSubscription: () =>
+    axiosInstance.get('/billing/subscription'),
+};

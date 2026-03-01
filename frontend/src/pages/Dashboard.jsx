@@ -523,7 +523,13 @@ const BillingTab = ({ credits, totalCredits, plan, planBadge }) => {
           billingAPI.getSubscription(),
           billingAPI.getPlans(),
         ]);
-        setSubscription(subRes.data.data);
+        // Flatten the nested response: { subscription: {...}, credits: {...}, recentTransactions: [...] }
+        const subData = subRes.data.data;
+        setSubscription({
+          ...(subData.subscription || {}),
+          credits: subData.credits,
+          recentTransactions: subData.recentTransactions || [],
+        });
         setPlans(plansRes.data.data || []);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load billing info');
@@ -570,7 +576,7 @@ const BillingTab = ({ credits, totalCredits, plan, planBadge }) => {
     );
   }
 
-  const currentPlanName = subscription?.plan?.name || 'FREE';
+  const currentPlanName = subscription?.planName || 'FREE';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -709,16 +715,16 @@ const BillingTab = ({ credits, totalCredits, plan, planBadge }) => {
               <div key={txn.id} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
-                    txn.type === 'EARNED' || txn.type === 'BONUS'
+                    txn.amount > 0
                       ? 'bg-green-500/8 border-green-500/15'
                       : 'bg-red-500/8 border-red-500/15'
                   }`}>
                     <Zap className={`w-3.5 h-3.5 ${
-                      txn.type === 'EARNED' || txn.type === 'BONUS' ? 'text-green-400' : 'text-red-400'
+                      txn.amount > 0 ? 'text-green-400' : 'text-red-400'
                     }`} />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">{txn.description || txn.type}</p>
+                    <p className="text-white text-sm font-medium">{txn.reason?.replace(/_/g, ' ') || 'Transaction'}</p>
                     <p className="text-slate-600 text-[11px]">
                       {new Date(txn.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>

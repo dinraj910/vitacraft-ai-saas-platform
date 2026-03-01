@@ -12,7 +12,7 @@ if (!STRIPE_SECRET_KEY || STRIPE_SECRET_KEY === 'sk_test_...') {
 }
 
 const stripe = STRIPE_SECRET_KEY && STRIPE_SECRET_KEY !== 'sk_test_...'
-  ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' })
+  ? new Stripe(STRIPE_SECRET_KEY)
   : null;
 
 // Plan → Stripe Price ID mapping (populated after seed or from .env)

@@ -3,8 +3,8 @@
 **Subject:** Cloud Computing — Assignment 1  
 **Project:** VitaCraft AI SaaS Platform  
 **Author:** DINRAJ K DINESH  
-**Docker Hub:** [hub.docker.com/u/dinraj910](https://hub.docker.com/u/dinraj910)  
-**GitHub:** [github.com/dinraj910/vitacraft-ai-saas-platform](https://github.com/dinraj910/vitacraft-ai-saas-platform)
+**Docker Hub:** [hub.docker.com/u/dinraj](https://hub.docker.com/u/dinraj)  
+**GitHub:** [github.com/dinraj/vitacraft-ai-saas-platform](https://github.com/dinraj/vitacraft-ai-saas-platform)
 
 ---
 
@@ -22,10 +22,11 @@
 4. [Phase 2 — Push Images to Docker Hub](#4-phase-2--push-images-to-docker-hub)
 5. [Phase 3 — EC2 Ubuntu Setup via MobaXterm](#5-phase-3--ec2-ubuntu-setup-via-mobaxterm)
 6. [Phase 4 — Deploy on EC2](#6-phase-4--deploy-on-ec2)
-7. [Verify & Test the Deployment](#7-verify--test-the-deployment)
-8. [Useful Docker Commands Reference](#8-useful-docker-commands-reference)
-9. [Troubleshooting](#9-troubleshooting)
-10. [Architecture Diagram](#10-architecture-diagram)
+7. [Stripe Production Webhook Setup](#7-stripe-production-webhook-setup)
+8. [Verify & Test the Deployment](#8-verify--test-the-deployment)
+9. [Useful Docker Commands Reference](#9-useful-docker-commands-reference)
+10. [Troubleshooting](#10-troubleshooting)
+11. [Architecture Diagram](#11-architecture-diagram)
 
 ---
 
@@ -35,8 +36,8 @@ VitaCraft AI is a full-stack AI SaaS application that generates resumes, cover l
 
 | Layer | Technology | Docker Image |
 |---|---|---|
-| **Frontend** | React 19 + Vite → served by Nginx | `dinraj910/vitacraft-frontend:latest` |
-| **Backend** | Node.js 20 + Express REST API | `dinraj910/vitacraft-backend:latest` |
+| **Frontend** | React 19 + Vite → served by Nginx | `dinraj/vitacraft-frontend:latest` |
+| **Backend** | Node.js 20 + Express REST API | `dinraj/vitacraft-backend:latest` |
 | **Database** | Supabase PostgreSQL (external cloud) | No container — external managed DB |
 | **Storage** | AWS S3 (external cloud) | No container — external managed storage |
 | **LLM** | Groq / Gemini / Cohere / HuggingFace | No container — external APIs |
@@ -49,7 +50,7 @@ Internet (Port 80)
         ▼
 ┌───────────────────────┐
 │  vitacraft-frontend   │  (Nginx — port 80)
-│  dinraj910/vitacraft  │
+│  dinraj/vitacraft  │
 │  -frontend:latest     │
 │                       │
 │  /          → React SPA
@@ -63,7 +64,7 @@ Internet (Port 80)
                                                         ▼
                                         ┌───────────────────────┐
                                         │  vitacraft-backend    │  (Node.js — port 5000)
-                                        │  dinraj910/vitacraft  │
+                                        │  dinraj/vitacraft  │
                                         │  -backend:latest      │
                                         │                       │
   External APIs ◄───────────────────────│  Groq / Gemini / etc │
@@ -275,7 +276,7 @@ version: '3.8'
 services:
 
   backend:
-    image: dinraj910/vitacraft-backend:latest
+    image: dinraj/vitacraft-backend:latest
     container_name: vitacraft-backend
     ports:
       - "5000:5000"
@@ -294,7 +295,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: dinraj910/vitacraft-frontend:latest
+    image: dinraj/vitacraft-frontend:latest
     container_name: vitacraft-frontend
     ports:
       - "80:80"
@@ -376,8 +377,8 @@ cd "d:\Cloud Web Projects\Assignment-1\VitaCraft AI"
 
 ```powershell
 docker build `
-  --tag dinraj910/vitacraft-backend:latest `
-  --tag dinraj910/vitacraft-backend:v1.0 `
+  --tag dinraj/vitacraft-backend:latest `
+  --tag dinraj/vitacraft-backend:v1.0 `
   --file backend/Dockerfile `
   ./backend
 ```
@@ -396,16 +397,16 @@ docker images | findstr vitacraft
 ```
 Expected output:
 ```
-dinraj910/vitacraft-backend   latest   abc123def456   2 minutes ago   195MB
-dinraj910/vitacraft-backend   v1.0     abc123def456   2 minutes ago   195MB
+dinraj/vitacraft-backend   latest   abc123def456   2 minutes ago   195MB
+dinraj/vitacraft-backend   v1.0     abc123def456   2 minutes ago   195MB
 ```
 
 ### Step 3 — Build the Frontend Image
 
 ```powershell
 docker build `
-  --tag dinraj910/vitacraft-frontend:latest `
-  --tag dinraj910/vitacraft-frontend:v1.0 `
+  --tag dinraj/vitacraft-frontend:latest `
+  --tag dinraj/vitacraft-frontend:v1.0 `
   --file frontend/Dockerfile `
   ./frontend
 ```
@@ -421,10 +422,10 @@ docker images | findstr vitacraft
 ```
 Expected:
 ```
-dinraj910/vitacraft-frontend   latest   def456abc789   2 minutes ago   45MB
-dinraj910/vitacraft-frontend   v1.0     def456abc789   2 minutes ago   45MB
-dinraj910/vitacraft-backend    latest   abc123def456   4 minutes ago   195MB
-dinraj910/vitacraft-backend    v1.0     abc123def456   4 minutes ago   195MB
+dinraj/vitacraft-frontend   latest   def456abc789   2 minutes ago   45MB
+dinraj/vitacraft-frontend   v1.0     def456abc789   2 minutes ago   45MB
+dinraj/vitacraft-backend    latest   abc123def456   4 minutes ago   195MB
+dinraj/vitacraft-backend    v1.0     abc123def456   4 minutes ago   195MB
 ```
 
 ### Step 4 (Optional) — Test Locally Before Pushing
@@ -457,13 +458,13 @@ docker compose down
 
 ```powershell
 # Push both tags
-docker push dinraj910/vitacraft-backend:latest
-docker push dinraj910/vitacraft-backend:v1.0
+docker push dinraj/vitacraft-backend:latest
+docker push dinraj/vitacraft-backend:v1.0
 ```
 
 **Output you'll see:**
 ```
-The push refers to repository [docker.io/dinraj910/vitacraft-backend]
+The push refers to repository [docker.io/dinraj/vitacraft-backend]
 a1b2c3d4e5f6: Pushed
 latest: digest: sha256:abc123... size: 12345
 ```
@@ -471,17 +472,17 @@ latest: digest: sha256:abc123... size: 12345
 ### Push Frontend Image
 
 ```powershell
-docker push dinraj910/vitacraft-frontend:latest
-docker push dinraj910/vitacraft-frontend:v1.0
+docker push dinraj/vitacraft-frontend:latest
+docker push dinraj/vitacraft-frontend:v1.0
 ```
 
 ### Verify on Docker Hub
 
-Go to: [https://hub.docker.com/u/dinraj910](https://hub.docker.com/u/dinraj910)
+Go to: [https://hub.docker.com/u/dinraj](https://hub.docker.com/u/dinraj)
 
 You should see two repositories:
-- `dinraj910/vitacraft-backend` — with tags `latest` and `v1.0`
-- `dinraj910/vitacraft-frontend` — with tags `latest` and `v1.0`
+- `dinraj/vitacraft-backend` — with tags `latest` and `v1.0`
+- `dinraj/vitacraft-frontend` — with tags `latest` and `v1.0`
 
 ---
 
@@ -577,7 +578,7 @@ version: '3.8'
 services:
 
   backend:
-    image: dinraj910/vitacraft-backend:latest
+    image: dinraj/vitacraft-backend:latest
     container_name: vitacraft-backend
     ports:
       - "5000:5000"
@@ -596,7 +597,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: dinraj910/vitacraft-frontend:latest
+    image: dinraj/vitacraft-frontend:latest
     container_name: vitacraft-frontend
     ports:
       - "80:80"
@@ -660,16 +661,16 @@ EOF
 ### Step 4 — Pull Images from Docker Hub
 
 ```bash
-docker pull dinraj910/vitacraft-backend:latest
-docker pull dinraj910/vitacraft-frontend:latest
+docker pull dinraj/vitacraft-backend:latest
+docker pull dinraj/vitacraft-frontend:latest
 ```
 
 Output:
 ```
-latest: Pulling from dinraj910/vitacraft-backend
+latest: Pulling from dinraj/vitacraft-backend
 3.11: Pulling from library/node
 ...
-Status: Downloaded newer image for dinraj910/vitacraft-backend:latest
+Status: Downloaded newer image for dinraj/vitacraft-backend:latest
 ```
 
 ### Step 5 — Start the Application
@@ -727,7 +728,102 @@ info: ✅ LLM providers ready: Groq → Gemini → Cohere → HuggingFace
 
 ---
 
-## 7. Verify & Test the Deployment
+## 7. Stripe Production Webhook Setup
+
+> **Why this step?** Locally you used `stripe listen --forward-to localhost:5000/...` which generated a **CLI webhook secret**. That secret only works on your machine. On EC2, Stripe must be told your real public URL, and it generates a different signing secret — the **Dashboard webhook secret**.
+
+### 7.1 Register the Webhook Endpoint in Stripe Dashboard
+
+1. Go to **[dashboard.stripe.com/test/webhooks](https://dashboard.stripe.com/test/webhooks)**
+2. Click **"Add endpoint"**
+3. Set **Endpoint URL** to:
+   ```
+   http://YOUR_EC2_PUBLIC_IP/api/v1/billing/webhook
+   ```
+   *(Replace `YOUR_EC2_PUBLIC_IP` with e.g. `54.161.12.34`)*
+4. Under **"Select events to listen to"**, add these events:
+
+   | Event | Purpose |
+   |---|---|
+   | `checkout.session.completed` | User completes payment → grant credits |
+   | `invoice.paid` | Monthly renewal → grant credits |
+   | `customer.subscription.updated` | Plan changes, cancellation scheduled |
+   | `customer.subscription.deleted` | Subscription cancelled → downgrade to FREE |
+
+5. Click **"Add endpoint"**
+6. On the next screen, click **"Reveal"** under **Signing secret**
+7. Copy the secret — it looks like `whsec_xxxxxxxxxxxx`
+
+### 7.2 Update `.env` on EC2 with the Dashboard Secret
+
+```bash
+cd ~/vitacraft-ai
+nano .env
+```
+
+Find the line:
+```
+STRIPE_WEBHOOK_SECRET="whsec_PASTE_DASHBOARD_SECRET_HERE"
+```
+
+Replace with the secret you just copied from the Dashboard:
+```
+STRIPE_WEBHOOK_SECRET="whsec_xxxxxxxxxxxxxxxxxxxx"
+```
+
+Also verify/update:
+```
+FRONTEND_URL="http://YOUR_EC2_PUBLIC_IP"
+```
+> **Why `FRONTEND_URL` matters:** After a successful checkout, Stripe redirects the user to `FRONTEND_URL/dashboard?checkout=success`. If this is still `localhost`, it won't work.
+
+Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
+
+### 7.3 Restart the Backend to Load New Env Vars
+
+```bash
+docker compose restart backend
+docker compose logs -f backend
+```
+
+### 7.4 Verify the Webhook is Working
+
+**Test from Stripe Dashboard:**
+1. Go to your webhook endpoint in the Dashboard
+2. Click **"Send test webhook"**
+3. Choose `checkout.session.completed`
+4. Click **Send test webhook**
+5. You should see: ✅ **200** — `{"received": true}`
+
+**Or test from EC2 terminal:**
+```bash
+# Hit the webhook route directly (will return 400 — no signature, which proves the route exists)
+curl -X POST http://localhost:5000/api/v1/billing/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"test":true}'
+
+# Expected: {"error":"Webhook Error: No signatures found matching the expected signature..."}
+# This proves the route works and signature verification is active
+```
+
+**Check backend logs for successful webhook processing:**
+```bash
+docker compose logs backend | grep -E "Stripe|webhook|checkout|credits|✅"
+```
+
+### 7.5 Stripe Setup Summary
+
+| Item | Local (dev) | EC2 (production) |
+|---|---|---|
+| Webhook delivery | `stripe listen` CLI forwards to `localhost` | Stripe Dashboard sends to `http://EC2_IP/api/v1/billing/webhook` |
+| Webhook secret | CLI-generated `whsec_...` (from `stripe listen`) | Dashboard-generated `whsec_...` (from Dashboard → Endpoint → Reveal) |
+| Checkout redirect | `http://localhost:5173/dashboard` | `http://EC2_IP/dashboard` |
+| `FRONTEND_URL` | `http://localhost:5173` | `http://YOUR_EC2_PUBLIC_IP` |
+
+---
+
+## 8. Verify & Test the Deployment
+
 
 ### From EC2 Terminal
 
@@ -771,7 +867,7 @@ Replace `EC2_PUBLIC_IP` with your actual IP (e.g., `54.161.12.34`):
 
 ---
 
-## 8. Useful Docker Commands Reference
+## 9. Useful Docker Commands Reference
 
 ### Image Management
 
@@ -780,13 +876,13 @@ Replace `EC2_PUBLIC_IP` with your actual IP (e.g., `54.161.12.34`):
 docker images
 
 # Remove a specific image
-docker rmi dinraj910/vitacraft-backend:latest
+docker rmi dinraj/vitacraft-backend:latest
 
 # Remove all unused images (free up disk)
 docker image prune -a
 
 # Pull specific version
-docker pull dinraj910/vitacraft-backend:v1.0
+docker pull dinraj/vitacraft-backend:v1.0
 ```
 
 ### Container Management
@@ -845,7 +941,7 @@ docker image prune -f
 
 ---
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 ### Container exits immediately
 
@@ -901,7 +997,7 @@ docker login
 
 ---
 
-## 10. Architecture Diagram
+## 11. Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -949,18 +1045,18 @@ cd "d:\Cloud Web Projects\Assignment-1\VitaCraft AI"
 docker login
 
 # 3. Build backend image
-docker build --tag dinraj910/vitacraft-backend:latest --tag dinraj910/vitacraft-backend:v1.0 --file backend/Dockerfile ./backend
+docker build --tag dinraj/vitacraft-backend:latest --tag dinraj/vitacraft-backend:v1.0 --file backend/Dockerfile ./backend
 
 # 4. Build frontend image
-docker build --tag dinraj910/vitacraft-frontend:latest --tag dinraj910/vitacraft-frontend:v1.0 --file frontend/Dockerfile ./frontend
+docker build --tag dinraj/vitacraft-frontend:latest --tag dinraj/vitacraft-frontend:v1.0 --file frontend/Dockerfile ./frontend
 
 # 5. Push backend
-docker push dinraj910/vitacraft-backend:latest
-docker push dinraj910/vitacraft-backend:v1.0
+docker push dinraj/vitacraft-backend:latest
+docker push dinraj/vitacraft-backend:v1.0
 
 # 6. Push frontend
-docker push dinraj910/vitacraft-frontend:latest
-docker push dinraj910/vitacraft-frontend:v1.0
+docker push dinraj/vitacraft-frontend:latest
+docker push dinraj/vitacraft-frontend:v1.0
 ```
 
 ### On EC2 Ubuntu (via MobaXterm)
@@ -979,8 +1075,8 @@ mkdir -p ~/vitacraft-ai && cd ~/vitacraft-ai
 nano .env
 
 # 5. Pull images
-docker pull dinraj910/vitacraft-backend:latest
-docker pull dinraj910/vitacraft-frontend:latest
+docker pull dinraj/vitacraft-backend:latest
+docker pull dinraj/vitacraft-frontend:latest
 
 # 6. Start everything
 docker compose up -d

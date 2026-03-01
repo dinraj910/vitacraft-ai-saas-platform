@@ -12,7 +12,7 @@ services:
 
   # ── Node.js / Express API ────────────────────────────────────────────────
   backend:
-    image: dinraj910/vitacraft-backend:latest
+    image: dinraj/vitacraft-backend:latest
     container_name: vitacraft-backend
     ports:
       - "5000:5000"                 # Exposed for direct debugging; can be removed in strict prod
@@ -32,7 +32,7 @@ services:
 
   # ── React (Nginx) Front-end ──────────────────────────────────────────────
   frontend:
-    image: dinraj910/vitacraft-frontend:latest
+    image: dinraj/vitacraft-frontend:latest
     container_name: vitacraft-frontend
     ports:
       - "80:80"                     # Public HTTP port

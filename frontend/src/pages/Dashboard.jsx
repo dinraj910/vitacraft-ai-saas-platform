@@ -5,7 +5,7 @@ import {
   Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
   ChevronRight, Bell, Menu, X, Clock, ArrowUpRight, Plus,
   Loader2, Download, Check, AlertCircle, ExternalLink, User,
-  Lock, Eye, EyeOff,
+  Lock, Eye, EyeOff, Search,
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useAuthStore from '../store/authStore';
@@ -76,6 +76,7 @@ const ToolCard = ({ icon: Icon, title, description, credits, badge, onClick, dis
     brand:  { bg: 'bg-brand-500/8 border-brand-500/15', icon: 'text-brand-400', glow: 'group-hover:border-brand-500/30' },
     blue:   { bg: 'bg-blue-500/8 border-blue-500/15',   icon: 'text-blue-400',  glow: 'group-hover:border-blue-500/30' },
     purple: { bg: 'bg-purple-500/8 border-purple-500/15', icon: 'text-purple-400', glow: 'group-hover:border-purple-500/30' },
+    green:  { bg: 'bg-emerald-500/8 border-emerald-500/15', icon: 'text-emerald-400', glow: 'group-hover:border-emerald-500/30' },
   };
   const a = accents[accent];
   return (
@@ -300,7 +301,7 @@ const Dashboard = () => {
                       All tools <ArrowUpRight className="w-3 h-3" />
                     </button>
                   </div>
-                  <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <ToolCard icon={FileText} accent="brand" credits={1}
                       title="Resume Generator"
                       description="ATS-optimized resumes tailored to your target role."
@@ -313,6 +314,10 @@ const Dashboard = () => {
                       title="Job Analyzer"
                       description="Extract keywords and beat ATS screening systems."
                       onClick={() => navigate('/job-analyzer')} disabled={credits === 0} />
+                    <ToolCard icon={Search} accent="green" credits={1}
+                      title="Resume Analyzer"
+                      description="Compare your resume against any job description."
+                      onClick={() => navigate('/resume-analyzer')} disabled={credits === 0} />
                   </div>
                 </div>
 
@@ -335,9 +340,10 @@ const Dashboard = () => {
                       <div className="divide-y divide-dark-700/40">
                         {historyItems.slice(0, 3).map((gen) => {
                           const TYPE_META = {
-                            RESUME:       { label: 'Resume',       icon: 'text-brand-400', bg: 'bg-brand-500/8 border-brand-500/15' },
-                            COVER_LETTER: { label: 'Cover Letter', icon: 'text-blue-400',  bg: 'bg-blue-500/8 border-blue-500/15' },
-                            JOB_ANALYSIS: { label: 'Job Analysis', icon: 'text-purple-400', bg: 'bg-purple-500/8 border-purple-500/15' },
+                            RESUME:          { label: 'Resume',          icon: 'text-brand-400', bg: 'bg-brand-500/8 border-brand-500/15' },
+                            COVER_LETTER:    { label: 'Cover Letter',    icon: 'text-blue-400',  bg: 'bg-blue-500/8 border-blue-500/15' },
+                            JOB_ANALYSIS:    { label: 'Job Analysis',    icon: 'text-purple-400', bg: 'bg-purple-500/8 border-purple-500/15' },
+                            RESUME_ANALYSIS: { label: 'Resume Analysis', icon: 'text-emerald-400', bg: 'bg-emerald-500/8 border-emerald-500/15' },
                           };
                           const m = TYPE_META[gen.type] || TYPE_META.RESUME;
                           const timeAgo = (() => {
@@ -382,7 +388,7 @@ const Dashboard = () => {
                   <h2 className="text-lg font-bold text-white mb-0.5">AI Tools</h2>
                   <p className="text-slate-500 text-sm">1 credit per generation · <span className="text-brand-300 font-medium">{credits}</span> remaining</p>
                 </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-4">
                   <ToolCard icon={FileText} accent="brand" credits={1}
                     title="Resume Generator"
                     description="Generate ATS-optimized, role-specific resumes with GPT-powered language tailored to your experience."
@@ -395,6 +401,10 @@ const Dashboard = () => {
                     title="Job Description Analyzer"
                     description="Extract key skills and requirements from any job listing to align your profile perfectly."
                     onClick={() => navigate('/job-analyzer')} disabled={credits === 0} />
+                  <ToolCard icon={Search} accent="green" credits={1}
+                    title="ATS Resume Analyzer"
+                    description="Upload your resume PDF and compare it against a job description for ATS compatibility scoring and improvement tips."
+                    onClick={() => navigate('/resume-analyzer')} disabled={credits === 0} />
                 </div>
               </div>
             )}

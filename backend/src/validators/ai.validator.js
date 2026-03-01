@@ -81,4 +81,18 @@ const jobAnalysisSchema = z.object({
   customInstructions:z.string().max(500).optional(),
 });
 
-module.exports = { resumeSchema, coverLetterSchema, jobAnalysisSchema };
+const resumeAnalysisSchema = z.object({
+  jobDescription: z
+    .string()
+    .min(50, 'Please paste the full job description (min 50 characters)')
+    .max(5000)
+    .trim(),
+
+  // Personalization options
+  targetRole:        z.string().max(100).optional(),
+  experienceLevel:   z.string().max(50).optional(),
+  industry:          z.string().max(100).optional(),
+  customInstructions:z.string().max(500).optional(),
+});
+
+module.exports = { resumeSchema, coverLetterSchema, jobAnalysisSchema, resumeAnalysisSchema };

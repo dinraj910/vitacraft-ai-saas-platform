@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import ResumeGenerator      from './pages/ResumeGenerator';
 import CoverLetterGenerator from './pages/CoverLetterGenerator';
 import JobAnalyzer          from './pages/JobAnalyzer';
+import ResumeAnalyzer       from './pages/ResumeAnalyzer';
 import {
   FileText, Mail, Briefcase, Zap, TrendingUp,
   Sparkles, Settings, Shield, LayoutDashboard, CreditCard,
@@ -24,6 +25,7 @@ const LandingPage = () => {
     { icon: FileText, title: 'AI Resume Generator', desc: 'Create ATS-optimized, role-specific resumes in seconds with our GPT-powered engine.', color: 'text-brand-400', bg: 'bg-brand-500/10 border-brand-500/20' },
     { icon: Mail,     title: 'Cover Letter Writer', desc: 'Personalized cover letters that match job requirements and showcase your strengths.', color: 'text-blue-400',  bg: 'bg-blue-500/10 border-blue-500/20' },
     { icon: Briefcase,title: 'Job Description Analyzer', desc: 'Extract key skills and align your profile to beat automated screening systems.', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    { icon: Settings, title: 'ATS Resume Analyzer', desc: 'Upload your resume and compare it against any job description for ATS compatibility scoring.', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
     { icon: Zap,      title: 'Credit-Based System', desc: 'Pay only for what you use. credits roll over monthly for Pro and Enterprise plans.', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
     { icon: TrendingUp, title: 'Usage Analytics',  desc: 'Track your career activity, document history and credit usage from one dashboard.', color: 'text-green-400',  bg: 'bg-green-500/10 border-green-500/20' },
     { icon: Shield,   title: 'Secure & Private',   desc: 'Your data is encrypted and never shared. Bank-grade security by Supabase + JWT.', color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
@@ -149,7 +151,7 @@ const LandingPage = () => {
             <p className="text-slate-400 max-w-xl mx-auto">A complete AI career toolkit — from resume optimization to job fit scoring — in one unified platform.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map((f) => (
               <div key={f.title} className="p-6 bg-dark-900 border border-dark-700/60 rounded-2xl hover:border-dark-600 transition-all duration-200 group">
                 <div className={`w-11 h-11 flex items-center justify-center rounded-xl border mb-5 ${f.bg} transition-transform group-hover:scale-110 duration-200`}>
@@ -310,6 +312,7 @@ const App = () => (
         <Route path="/resume"    element={<ProtectedRoute><ResumeGenerator /></ProtectedRoute>} />
         <Route path="/cover-letter" element={<ProtectedRoute><CoverLetterGenerator /></ProtectedRoute>} />
         <Route path="/job-analyzer"  element={<ProtectedRoute><JobAnalyzer /></ProtectedRoute>} />
+        <Route path="/resume-analyzer" element={<ProtectedRoute><ResumeAnalyzer /></ProtectedRoute>} />
         <Route path="*"          element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>

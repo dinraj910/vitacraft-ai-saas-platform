@@ -322,9 +322,78 @@ const analyzeJobDescription = async (userInput) => {
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ATS RESUME ANALYZER — compare uploaded resume against a job description
+// ─────────────────────────────────────────────────────────────────────────────
+
+const buildResumeAnalysisPrompt = ({ resumeText, jobDescription, targetRole, experienceLevel, industry, customInstructions }) => {
+  return `
+You are an expert ATS Resume Analyst. Analyze the candidate's resume against the provided job description and give a comprehensive ATS compatibility report.
+
+CANDIDATE'S RESUME (extracted from PDF):
+---
+${resumeText}
+---
+
+JOB DESCRIPTION:
+---
+${jobDescription}
+---
+${targetRole ? `\nTARGET ROLE: ${targetRole}` : ''}${experienceLevel ? `\nEXPERIENCE LEVEL: ${experienceLevel}` : ''}${industry ? `\nINDUSTRY: ${industry}` : ''}
+
+${customInstructions ? `ADDITIONAL INSTRUCTIONS:\n${customInstructions}\n` : ''}Provide this EXACT structure in your analysis:
+
+ATS COMPATIBILITY SCORE
+Give an overall ATS compatibility score out of 100 and a brief 1-2 sentence verdict.
+
+KEYWORD MATCH ANALYSIS
+• List the important keywords/phrases from the job description that ARE present in the resume
+• List the important keywords/phrases that are MISSING from the resume
+
+SKILLS GAP ANALYSIS
+• Required skills the candidate HAS (matched)
+• Required skills the candidate is MISSING
+• Nice-to-have skills present
+• Nice-to-have skills missing
+
+EXPERIENCE ALIGNMENT
+• How well the candidate's experience matches the role requirements
+• Specific experience strengths relative to this job
+• Experience gaps or areas of concern
+
+RESUME FORMAT & STRUCTURE
+• Is the resume ATS-friendly in terms of formatting?
+• Are section headers clear and standard?
+• Any formatting issues that could cause ATS parsing problems?
+
+IMPROVEMENT RECOMMENDATIONS
+Provide 5-7 specific, actionable recommendations to improve this resume for this particular job, including:
+• Which keywords to add and where
+• How to rewrite specific bullet points
+• Sections to add or restructure
+• Quantifiable achievements to emphasize
+
+REWRITTEN SUMMARY
+Write an optimized professional summary/objective that would score higher for this specific job description.
+
+Use plain text only. Use • for bullets. Be specific and reference actual content from the resume and job description.
+`.trim();
+};
+
+const analyzeResume = async (userInput) => {
+  return generateWithFallback(
+    buildResumeAnalysisPrompt(userInput),
+    {
+      maxTokens:    1500,
+      systemPrompt: 'You are an expert ATS Resume Analyst and career coach with 15 years of recruiting and HR experience. You specialize in optimizing resumes for Applicant Tracking Systems. Provide thorough, specific, and actionable analysis. Output plain text only — no markdown formatting.',
+    }
+  );
+};
+
 module.exports = {
   generateResume,
   generateCoverLetter,
   analyzeJobDescription,
+  analyzeResume,
   generateWithFallback,
 };

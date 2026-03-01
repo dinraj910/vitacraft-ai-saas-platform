@@ -7,9 +7,10 @@ import {
 import { aiAPI } from '../api/ai.api';
 
 const TYPE_LABELS = {
-  RESUME:       { label: 'Resume',       color: 'text-brand-300 bg-brand-500/15 border-brand-500/30', icon: '📄' },
-  COVER_LETTER: { label: 'Cover Letter', color: 'text-blue-300 bg-blue-500/15 border-blue-500/30', icon: '✉️' },
-  JOB_ANALYSIS: { label: 'Job Analysis', color: 'text-purple-300 bg-purple-500/15 border-purple-500/30', icon: '🔍' },
+  RESUME:          { label: 'Resume',          color: 'text-brand-300 bg-brand-500/15 border-brand-500/30', icon: '📄' },
+  COVER_LETTER:    { label: 'Cover Letter',    color: 'text-blue-300 bg-blue-500/15 border-blue-500/30', icon: '✉️' },
+  JOB_ANALYSIS:    { label: 'Job Analysis',    color: 'text-purple-300 bg-purple-500/15 border-purple-500/30', icon: '🔍' },
+  RESUME_ANALYSIS: { label: 'Resume Analysis', color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30', icon: '📊' },
 };
 
 const History = () => {

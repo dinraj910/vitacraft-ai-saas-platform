@@ -30,6 +30,7 @@ enum GenerationType {
   RESUME
   COVER_LETTER
   JOB_ANALYSIS
+  RESUME_ANALYSIS
 }
 
 enum SubscriptionStatus {

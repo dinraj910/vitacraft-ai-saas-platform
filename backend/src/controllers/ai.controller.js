@@ -1,10 +1,11 @@
-const { generateResume, generateCoverLetter, analyzeJobDescription } = require('../services/ai.service');
+const { generateResume, generateCoverLetter, analyzeJobDescription, analyzeResume } = require('../services/ai.service');
 const { deductCredit, getBalance } = require('../services/credit.service');
 const { generatePDF }  = require('../services/pdf.service');
 const { uploadToS3 }   = require('../services/s3.service');
 const asyncHandler     = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const prisma           = require('../config/db');
+const pdfParse         = require('pdf-parse');
 
 const CREDIT_COST = 1;
 
@@ -200,9 +201,82 @@ const getHistoryHandler = asyncHandler(async (req, res) => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/v1/ai/resume-analyzer/analyze
+// Flow: check credits → extract PDF text → LLM analysis → DB → deduct → respond
+// ─────────────────────────────────────────────────────────────────────────────
+const analyzeResumeHandler = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  // 1. Pre-flight credit check
+  const hasCredits = await checkCredits(userId, res);
+  if (!hasCredits) return;
+
+  // 2. Validate that a PDF file was uploaded
+  if (!req.file) {
+    return sendError(res, 400, 'Please upload a PDF resume file.', 'VALIDATION_ERROR');
+  }
+
+  if (req.file.mimetype !== 'application/pdf') {
+    return sendError(res, 400, 'Only PDF files are accepted.', 'VALIDATION_ERROR');
+  }
+
+  // 3. Extract text from the uploaded PDF
+  let resumeText;
+  try {
+    const pdfData = await pdfParse(req.file.buffer);
+    resumeText = pdfData.text;
+  } catch (err) {
+    return sendError(res, 400, 'Could not read the PDF file. Please ensure it is a valid, non-encrypted PDF.', 'PDF_PARSE_ERROR');
+  }
+
+  if (!resumeText || resumeText.trim().length < 50) {
+    return sendError(res, 400, 'The PDF appears to be empty or contains very little text. Please upload a text-based PDF resume (not a scanned image).', 'PDF_EMPTY');
+  }
+
+  // 4. Build input for the AI service
+  const analysisInput = {
+    resumeText:         resumeText.trim(),
+    jobDescription:     req.body.jobDescription,
+    targetRole:         req.body.targetRole,
+    experienceLevel:    req.body.experienceLevel,
+    industry:           req.body.industry,
+    customInstructions: req.body.customInstructions,
+  };
+
+  // 5. Call LLM — multi-provider with automatic fallback
+  const aiResult = await analyzeResume(analysisInput);
+
+  // 6. Save Generation record
+  const generation = await prisma.generation.create({
+    data: {
+      userId,
+      type:         'RESUME_ANALYSIS',
+      prompt:       JSON.stringify({ ...analysisInput, resumeText: `[PDF: ${req.file.originalname}, ${resumeText.length} chars]` }),
+      response:     aiResult.text,
+      model:        aiResult.model,
+      processingMs: aiResult.processingMs,
+      creditsUsed:  CREDIT_COST,
+    },
+  });
+
+  // 7. Deduct credits
+  const updatedAccount = await deductCredit(userId, CREDIT_COST, 'AI_GENERATION', generation.id);
+
+  return sendSuccess(res, 200, 'Resume analyzed successfully!', {
+    generationId:   generation.id,
+    text:           aiResult.text,
+    processingMs:   aiResult.processingMs,
+    model:          aiResult.model,
+    provider:       aiResult.provider,
+    resumeFileName: req.file.originalname,
+  }, { creditsRemaining: updatedAccount.balance });
+});
+
 module.exports = {
   generateResumeHandler,
   generateCoverLetterHandler,
   analyzeJobHandler,
+  analyzeResumeHandler,
   getHistoryHandler,
 };

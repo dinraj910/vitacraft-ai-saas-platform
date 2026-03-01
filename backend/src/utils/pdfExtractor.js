@@ -1,7 +1,18 @@
 // PDF text extraction using pdfjs-dist (Mozilla PDF.js)
 // Replaces old pdf-parse package which used pdfjs-dist 1.10 from 2018
 
+// Suppress harmless "Cannot polyfill DOMMatrix / Path2D" warnings
+// from pdfjs-dist — those are for visual rendering, not text extraction.
+const _warn = console.warn;
+console.warn = (...args) => {
+  if (typeof args[0] === 'string' && args[0].startsWith('Warning: Cannot polyfill')) return;
+  _warn.apply(console, args);
+};
+
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf');
+
+// Restore console.warn
+console.warn = _warn;
 const logger   = require('./logger');
 
 // Disable worker — not needed (or available) in Node.js

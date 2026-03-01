@@ -11,6 +11,12 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config) => {
   const { accessToken } = useAuthStore.getState();
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Let the browser set the correct Content-Type (with boundary) for FormData uploads
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
   return config;
 });
 

@@ -5,7 +5,8 @@ const { uploadToS3 }   = require('../services/s3.service');
 const asyncHandler     = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const prisma           = require('../config/db');
-const pdfParse         = require('pdf-parse');
+const { extractTextFromPDF } = require('../utils/pdfExtractor');
+const logger           = require('../utils/logger');
 
 const CREDIT_COST = 1;
 
@@ -224,10 +225,10 @@ const analyzeResumeHandler = asyncHandler(async (req, res) => {
   // 3. Extract text from the uploaded PDF
   let resumeText;
   try {
-    const pdfData = await pdfParse(req.file.buffer);
-    resumeText = pdfData.text;
+    resumeText = await extractTextFromPDF(req.file.buffer);
   } catch (err) {
-    return sendError(res, 400, 'Could not read the PDF file. Please ensure it is a valid, non-encrypted PDF.', 'PDF_PARSE_ERROR');
+    logger.error(`PDF extraction failed for ${req.file.originalname}: ${err.message}`);
+    return sendError(res, 400, `Could not read the PDF file: ${err.message}. Please ensure it is a valid, text-based (not scanned/image) PDF.`, 'PDF_PARSE_ERROR');
   }
 
   if (!resumeText || resumeText.trim().length < 50) {

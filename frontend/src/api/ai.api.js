@@ -11,9 +11,7 @@ export const aiAPI = {
     axiosInstance.post('/ai/job-analyzer/analyze', data),
 
   analyzeResume: (formData) =>
-    axiosInstance.post('/ai/resume-analyzer/analyze', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    axiosInstance.post('/ai/resume-analyzer/analyze', formData),
 
   getHistory: (page = 1, limit = 10) =>
     axiosInstance.get(`/ai/history?page=${page}&limit=${limit}`),

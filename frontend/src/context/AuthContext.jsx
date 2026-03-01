@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useEffect } from 'react';
 import { authAPI } from '../api/auth.api';
 import useAuthStore from '../store/authStore';
 
@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>;

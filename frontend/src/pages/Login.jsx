@@ -53,10 +53,10 @@ const Login = () => {
               Sign in to access your dashboard, generate documents, and track your job applications.
             </p>
             <ul className="space-y-4">
-              {features.map(({ icon: Icon, text }) => (
+              {features.map(({ icon: FeatureIcon, text }) => (
                 <li key={text} className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-brand-500/10 border border-brand-500/20 rounded-lg flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4 text-brand-400" />
+                    <FeatureIcon className="w-4 h-4 text-brand-400" />
                   </div>
                   <span className="text-slate-300 text-sm">{text}</span>
                 </li>

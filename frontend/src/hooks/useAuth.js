@@ -4,7 +4,7 @@ import useAuthStore from '../store/authStore';
 
 const useAuth = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, accessToken, setAuth, logout: storeLogout } = useAuthStore();
+  const { user, isAuthenticated, isLoading, setAuth, logout: storeLogout } = useAuthStore();
 
   const register = async (data) => {
     const res = await authAPI.register(data);

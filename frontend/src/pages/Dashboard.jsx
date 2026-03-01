@@ -9,8 +9,7 @@ import {
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useAuthStore from '../store/authStore';
-import { aiAPI, filesAPI, billingAPI } from '../api/ai.api';
-import { authAPI } from '../api/auth.api';
+import { aiAPI, billingAPI } from '../api/ai.api';
 
 
 /* ─── Credit Bar ─── */
@@ -34,21 +33,21 @@ const CreditBar = ({ balance, total }) => {
 };
 
 /* ─── Nav Item ─── */
-const NavItem = ({ icon: Icon, label, active, badge, onClick }) => (
+const NavItem = ({ icon: NavIcon, label, active, badge, onClick }) => (
   <button onClick={onClick}
     className={`group w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
       active
         ? 'bg-brand-500/12 text-brand-300'
         : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
     }`}>
-    <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+    <NavIcon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
     <span className="flex-1 text-left truncate">{label}</span>
     {badge && <span className="text-[10px] bg-brand-500/20 text-brand-300 px-1.5 py-px rounded-full font-semibold">{badge}</span>}
   </button>
 );
 
 /* ─── Stat Card ─── */
-const StatCard = ({ label, value, icon: Icon, accent }) => {
+const StatCard = ({ label, value, icon: StatIcon, accent }) => {
   const styles = {
     brand:  'bg-brand-500/8 border-brand-500/15 text-brand-400',
     blue:   'bg-blue-500/8 border-blue-500/15 text-blue-400',
@@ -59,7 +58,7 @@ const StatCard = ({ label, value, icon: Icon, accent }) => {
     <div className="bg-dark-900/80 border border-dark-700/50 rounded-xl p-4 hover:border-dark-600/60 transition-colors">
       <div className="flex items-center gap-3">
         <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${styles[accent]}`}>
-          <Icon className="w-4 h-4" />
+          <StatIcon className="w-4 h-4" />
         </div>
         <div className="min-w-0">
           <p className="text-xl font-bold text-white leading-none mb-0.5">{value}</p>
@@ -71,7 +70,7 @@ const StatCard = ({ label, value, icon: Icon, accent }) => {
 };
 
 /* ─── Tool Card ─── */
-const ToolCard = ({ icon: Icon, title, description, credits, badge, onClick, disabled, accent = 'brand' }) => {
+const ToolCard = ({ icon: ToolIcon, title, description, credits, badge, onClick, disabled, accent = 'brand' }) => {
   const accents = {
     brand:  { bg: 'bg-brand-500/8 border-brand-500/15', icon: 'text-brand-400', glow: 'group-hover:border-brand-500/30' },
     blue:   { bg: 'bg-blue-500/8 border-blue-500/15',   icon: 'text-blue-400',  glow: 'group-hover:border-blue-500/30' },
@@ -88,7 +87,7 @@ const ToolCard = ({ icon: Icon, title, description, credits, badge, onClick, dis
       }`}>
       <div className="flex items-start justify-between mb-3">
         <div className={`w-10 h-10 rounded-lg border flex items-center justify-center ${a.bg}`}>
-          <Icon className={`w-5 h-5 ${a.icon}`} />
+          <ToolIcon className={`w-5 h-5 ${a.icon}`} />
         </div>
         <div className="flex items-center gap-1.5">
           {badge && <span className="text-[10px] bg-dark-700 text-slate-400 px-2 py-0.5 rounded-full font-medium border border-dark-600">{badge}</span>}
@@ -140,6 +139,7 @@ const Dashboard = () => {
       }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const planBadge = {
@@ -519,7 +519,7 @@ const PLAN_PRICES = { FREE: 0, PRO: 9.99, ENTERPRISE: 29.99 };
 
 const BillingTab = ({ credits, totalCredits, plan, planBadge }) => {
   const [subscription, setSubscription] = useState(null);
-  const [plans, setPlans]               = useState([]);
+  const [, setPlans]                    = useState([]);
   const [loading, setLoading]           = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState('');
   const [portalLoading, setPortalLoading]     = useState(false);

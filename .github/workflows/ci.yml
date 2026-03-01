@@ -51,18 +51,21 @@ jobs:
         run: npm run db:generate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
       
       - name: Run Prisma migrations
         working-directory: ${{ env.BACKEND_DIR }}
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
       
       - name: Run tests
         working-directory: ${{ env.BACKEND_DIR }}
         run: npm test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/vitacraft_test
           NODE_ENV: test
           JWT_SECRET: test-secret-key-for-ci
           JWT_EXPIRE: 7d

@@ -32,7 +32,7 @@ const GeneratedOutput = ({ result, onRegenerate, isLoading, type = 'resume' }) =
     if (!text) return '';
     return text
       // Convert ALL CAPS lines to markdown headers
-      .replace(/^([A-Z][A-Z &\/\-]{2,})$/gm, '\n## $1\n')
+      .replace(/^([A-Z][A-Z &/-]{2,})$/gm, '\n## $1\n')
       // Convert • bullets to markdown bullets
       .replace(/^[•●▪]/gm, '-')
       // Convert lines starting with - to ensure spacing

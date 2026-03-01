@@ -7,7 +7,7 @@ const {
   getSubscriptionHandler,
   getPlansHandler,
 } = require('../../../controllers/billing.controller');
-const { authenticate } = require('../../../middleware/auth.middleware');
+const { verifyAccessToken } = require('../../../middleware/auth.middleware');
 
 const router = Router();
 
@@ -18,8 +18,8 @@ router.get('/plans', getPlansHandler);
 router.post('/webhook', webhookHandler);
 
 // Protected
-router.post('/create-checkout-session', authenticate, createCheckoutHandler);
-router.post('/create-portal-session', authenticate, createPortalHandler);
-router.get('/subscription', authenticate, getSubscriptionHandler);
+router.post('/create-checkout-session', verifyAccessToken, createCheckoutHandler);
+router.post('/create-portal-session', verifyAccessToken, createPortalHandler);
+router.get('/subscription', verifyAccessToken, getSubscriptionHandler);
 
 module.exports = router;

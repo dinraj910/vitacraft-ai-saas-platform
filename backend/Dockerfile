@@ -39,18 +39,3 @@ EXPOSE 5000
 # dumb-init wraps entrypoint so signals work correctly
 ENTRYPOINT ["dumb-init", "--", "./docker-entrypoint.sh"]
 CMD ["node", "src/app.js"]
-```
-
----
-
-### FILE 23 — `backend/.dockerignore`
-```
-node_modules
-.env
-.env.*
-!.env.example
-logs/
-*.log
-.git
-tests/
-coverage/

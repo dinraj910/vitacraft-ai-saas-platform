@@ -14,6 +14,17 @@ const v1Router         = require('./api/v1/index');
 
 require('./config/db'); // connect on startup
 
+// Log which LLM providers are configured on startup
+const { getEnabledProviders, PROVIDERS } = require('./config/llm');
+setTimeout(() => {
+  const enabled = getEnabledProviders();
+  if (enabled.length === 0) {
+    logger.warn('⚠️  No LLM providers configured! Add API keys to .env');
+  } else {
+    logger.info(`✅ LLM providers ready: ${enabled.map((k) => PROVIDERS[k].name).join(' → ')}`);
+  }
+}, 1000);
+
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
@@ -62,11 +73,10 @@ if (process.env.NODE_ENV !== 'test') {
     logger.info(`🔗 http://localhost:${PORT}/health`);
   });
   
-  // Increase timeout for long-running AI generation requests
-  // Ollama can take up to 120s, so we set 180s (3 min) to be safe
-  server.timeout = 180000;
-  server.keepAliveTimeout = 185000;
-  server.headersTimeout = 190000;
+  // Timeout for AI generation requests (cloud APIs are fast, 60s is plenty)
+  server.timeout = 60000;
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 70000;
 }
 
 module.exports = app;

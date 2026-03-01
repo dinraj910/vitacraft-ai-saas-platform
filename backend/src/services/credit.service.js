@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 /**
  * Atomically check balance and deduct credits using a Prisma transaction.
  * If balance is insufficient → throws INSUFFICIENT_CREDITS error.
- * If Ollama fails AFTER this call → you should NOT call this (deduct after success).
+ * If the LLM fails AFTER this call → you should NOT call this (deduct after success).
  */
 const deductCredit = async (userId, amount = 1, reason = 'AI_GENERATION', generationId = null) => {
   return await prisma.$transaction(async (tx) => {

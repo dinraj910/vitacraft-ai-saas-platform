@@ -22,16 +22,16 @@ const checkCredits = async (userId, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/v1/ai/resume/generate
-// Flow: check credits → Ollama → PDF → S3 → DB → deduct credits → respond
+// Flow: check credits → LLM → PDF → S3 → DB → deduct credits → respond
 // ─────────────────────────────────────────────────────────────────────────────
 const generateResumeHandler = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
-  // 1. Pre-flight credit check (fast — before calling Ollama)
+  // 1. Pre-flight credit check (fast — before calling LLM)
   const hasCredits = await checkCredits(userId, res);
   if (!hasCredits) return;
 
-  // 2. Call Ollama — on-demand LLM invocation
+  // 2. Call LLM — multi-provider with automatic fallback
   const aiResult = await generateResume(req.body);
 
   // 3. Generate PDF buffer from AI text

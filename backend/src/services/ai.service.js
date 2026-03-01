@@ -1,70 +1,183 @@
+// src/services/ai.service.js
+// Multi-provider LLM service with automatic fallback
+// Order: Groq → Gemini → Cohere → HuggingFace
+
 const axios  = require('axios');
-const { OLLAMA_BASE_URL, OLLAMA_MODEL } = require('../config/ollama');
 const logger = require('../utils/logger');
+const { PROVIDERS, getEnabledProviders } = require('../config/llm');
 
-// Timeout: 4 minutes — phi3:mini on CPU is very slow; resume generation can take 3+ min
-const OLLAMA_TIMEOUT = 240_000;
+// ─────────────────────────────────────────────────────────────────────────────
+// PROVIDER IMPLEMENTATIONS
+// Each function takes (prompt, systemPrompt, maxTokens) → returns string
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Core Ollama invocation.
- * Calls the /api/generate endpoint with stream:false.
- * Model is loaded on-demand — first request after idle takes ~5s to load.
- */
-const generateWithOllama = async (prompt, options = {}) => {
+const callGroq = async (prompt, systemPrompt, maxTokens) => {
+  const response = await axios.post(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: prompt },
+      ],
+      max_tokens:  maxTokens,
+      temperature: 0.7,
+    },
+    {
+      headers: {
+        Authorization:  `Bearer ${PROVIDERS.groq.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000,
+    }
+  );
+  return response.data.choices[0].message.content;
+};
+
+const callGemini = async (prompt, systemPrompt, maxTokens) => {
+  const response = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${PROVIDERS.gemini.apiKey}`,
+    {
+      contents: [
+        {
+          parts: [{ text: `${systemPrompt}\n\n${prompt}` }],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature:     0.7,
+      },
+    },
+    {
+      headers:  { 'Content-Type': 'application/json' },
+      timeout:  30000,
+    }
+  );
+  return response.data.candidates[0].content.parts[0].text;
+};
+
+const callCohere = async (prompt, systemPrompt, maxTokens) => {
+  const response = await axios.post(
+    'https://api.cohere.ai/v1/chat',
+    {
+      model:       'command-r',
+      message:     prompt,
+      preamble:    systemPrompt,
+      max_tokens:  maxTokens,
+      temperature: 0.7,
+    },
+    {
+      headers: {
+        Authorization:  `Bearer ${PROVIDERS.cohere.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 40000,
+    }
+  );
+  return response.data.text;
+};
+
+const callHuggingFace = async (prompt, systemPrompt, maxTokens) => {
+  const response = await axios.post(
+    'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+    {
+      inputs: `<s>[INST] ${systemPrompt}\n\n${prompt} [/INST]`,
+      parameters: {
+        max_new_tokens: maxTokens,
+        temperature:    0.7,
+        return_full_text: false,
+      },
+    },
+    {
+      headers: {
+        Authorization:  `Bearer ${PROVIDERS.huggingface.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 60000,
+    }
+  );
+
+  // HF returns array
+  const raw = response.data;
+  if (Array.isArray(raw)) return raw[0].generated_text;
+  return raw.generated_text || raw;
+};
+
+// Map provider key → call function
+const CALLER_MAP = {
+  groq:        callGroq,
+  gemini:      callGemini,
+  cohere:      callCohere,
+  huggingface: callHuggingFace,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CORE — generateWithFallback
+// Tries each enabled provider in order. If one fails, tries the next.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const generateWithFallback = async (prompt, options = {}) => {
   const {
     maxTokens    = 1000,
-    temperature  = 0.7,
     systemPrompt = 'You are a professional career document writer.',
   } = options;
 
-  const startTime = Date.now();
-  logger.info(`Ollama request started — model: ${OLLAMA_MODEL}`);
+  const enabledProviders = getEnabledProviders();
 
-  try {
-    const response = await axios.post(
-      `${OLLAMA_BASE_URL}/api/generate`,
-      {
-        model:  OLLAMA_MODEL,
-        prompt: `${systemPrompt}\n\n${prompt}`,
-        stream: false,
-        options: {
-          num_predict: maxTokens,
-          temperature,
-          top_p: 0.9,
-        },
-      },
-      { timeout: OLLAMA_TIMEOUT }
+  if (enabledProviders.length === 0) {
+    const err = new Error(
+      'No LLM providers configured. Please add at least one API key to your .env file (GROQ_API_KEY, GEMINI_API_KEY, COHERE_API_KEY, or HF_API_KEY).'
     );
-
-    const processingMs = Date.now() - startTime;
-    logger.info(`Ollama response received in ${processingMs}ms`);
-
-    return {
-      text:         response.data.response,
-      processingMs,
-      model:        OLLAMA_MODEL,
-    };
-  } catch (error) {
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      const err = new Error('AI service is currently unavailable. Please try again in a moment.');
-      err.status = 503;
-      err.code   = 'AI_SERVICE_UNAVAILABLE';
-      throw err;
-    }
-    // Catch all timeout variants across axios versions and Node.js
-    if (
-      error.code === 'ECONNABORTED' ||
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ERR_CANCELED' ||
-      (error.message && error.message.toLowerCase().includes('timeout'))
-    ) {
-      const err = new Error('AI generation timed out. Please try again.');
-      err.status = 504;
-      err.code   = 'AI_TIMEOUT';
-      throw err;
-    }
-    throw error;
+    err.status = 503;
+    err.code   = 'AI_SERVICE_UNAVAILABLE';
+    throw err;
   }
+
+  const errors = [];
+
+  for (const providerKey of enabledProviders) {
+    const provider = PROVIDERS[providerKey];
+    const caller   = CALLER_MAP[providerKey];
+    const startTime = Date.now();
+
+    try {
+      logger.info(`Trying LLM provider: ${provider.name}`);
+
+      const text = await caller(prompt, systemPrompt, maxTokens);
+
+      const processingMs = Date.now() - startTime;
+      logger.info(`✅ ${provider.name} responded in ${processingMs}ms`);
+
+      return {
+        text:         text.trim(),
+        processingMs,
+        model:        provider.name,
+        provider:     providerKey,
+      };
+    } catch (error) {
+      const msg = error.response?.data?.error?.message
+                || error.response?.data?.message
+                || error.message;
+
+      logger.warn(`❌ ${provider.name} failed: ${msg} — trying next provider`);
+      errors.push(`${provider.name}: ${msg}`);
+
+      // Check if it's an auth error — log prominently
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        logger.error(`🔑 ${provider.name}: Invalid API key — check your .env`);
+      }
+
+      // Continue to next provider
+    }
+  }
+
+  // All providers failed
+  const err = new Error(
+    `All AI providers failed. Errors: ${errors.join(' | ')}`
+  );
+  err.status = 503;
+  err.code   = 'AI_SERVICE_UNAVAILABLE';
+  throw err;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,111 +185,135 @@ const generateWithOllama = async (prompt, options = {}) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const buildResumePrompt = ({ name, jobTitle, experience, skills, education, summary }) => {
+  const skillList = Array.isArray(skills) ? skills.join(', ') : skills;
   return `
 Create a professional, ATS-optimized resume for the following person.
 
-CANDIDATE INFORMATION:
+CANDIDATE DETAILS:
 - Full Name: ${name}
 - Target Job Title: ${jobTitle}
-- Professional Summary: ${summary || 'Not provided — write a suitable one'}
+- Professional Summary Input: ${summary || 'Not provided — write a strong one based on the experience'}
 - Work Experience: ${experience}
-- Key Skills: ${Array.isArray(skills) ? skills.join(', ') : skills}
+- Skills: ${skillList}
 - Education: ${education}
 
-INSTRUCTIONS:
-- Format with clear section headers: SUMMARY, EXPERIENCE, SKILLS, EDUCATION
-- Use bullet points (•) for experience and skills
-- Make it ATS-friendly with relevant keywords for the target role
-- Keep language professional, action-verb driven, and concise
-- Do NOT include placeholder text like [Company Name] — use realistic examples based on the context provided
-- Output plain text only — no markdown, no asterisks for bold
+STRICT OUTPUT RULES:
+- Use ONLY plain text — no markdown, no asterisks, no hash symbols
+- Section headers must be in ALL CAPS (SUMMARY, EXPERIENCE, SKILLS, EDUCATION)
+- Use bullet points with the • character
+- Do NOT use placeholder text like [Company Name]
+- Keep it concise, professional, and ATS-friendly
+- Start directly with the candidate's name
 
 OUTPUT FORMAT:
 ${name.toUpperCase()}
 ${jobTitle}
 
 SUMMARY
-[2-3 sentence professional summary]
+Write 2-3 sentences here.
 
 EXPERIENCE
-[Job Title | Company Name | Duration]
-- [Achievement/responsibility]
-- [Achievement/responsibility]
+Job Title | Company Name | Start Year – End Year
+• Achievement with measurable result
+• Another key responsibility or achievement
 
 SKILLS
-- [Skill category]: [skills]
+• Technical Skills: list them here
+• Soft Skills: list them here
 
 EDUCATION
-[Degree | Institution | Year]
+Degree | Institution | Year
 `.trim();
 };
 
 const generateResume = async (userInput) => {
-  const prompt = buildResumePrompt(userInput);
-  return generateWithOllama(prompt, {
-    maxTokens:    700,
-    temperature:  0.6,
-    systemPrompt: 'You are an expert resume writer. Write clean, ATS-optimized resumes in plain text only.',
-  });
+  return generateWithFallback(
+    buildResumePrompt(userInput),
+    {
+      maxTokens:    900,
+      systemPrompt: 'You are an expert ATS resume writer with 15 years of HR experience. You write clean, professional, keyword-optimized resumes. Output plain text only — absolutely no markdown formatting.',
+    }
+  );
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COVER LETTER GENERATOR (stub for Phase 2 — full implementation Phase 3)
+// COVER LETTER GENERATOR
 // ─────────────────────────────────────────────────────────────────────────────
 
 const buildCoverLetterPrompt = ({ name, jobTitle, company, experience, skills, whyCompany }) => {
+  const skillList = Array.isArray(skills) ? skills.join(', ') : skills;
   return `
-Write a professional cover letter for:
-- Applicant: ${name}
-- Applying for: ${jobTitle} at ${company}
-- Experience: ${experience}
-- Skills: ${Array.isArray(skills) ? skills.join(', ') : skills}
-- Why this company: ${whyCompany || 'passionate about the company mission'}
+Write a professional cover letter for a job application.
 
-Write a 3-paragraph cover letter: opening hook, body with relevant experience, closing call-to-action.
-Output plain text only — no markdown.
+APPLICANT: ${name}
+APPLYING FOR: ${jobTitle} at ${company}
+EXPERIENCE: ${experience}
+SKILLS: ${skillList}
+WHY THIS COMPANY: ${whyCompany || 'passionate about the mission and growth opportunities'}
+
+RULES:
+- 3 paragraphs: strong opening hook, experience body, confident closing
+- Professional but personable tone
+- Plain text only — no markdown
+- Address to "Hiring Manager" if no name given
+- End with a call to action
 `.trim();
 };
 
 const generateCoverLetter = async (userInput) => {
-  const prompt = buildCoverLetterPrompt(userInput);
-  return generateWithOllama(prompt, {
-    maxTokens:    450,
-    temperature:  0.7,
-    systemPrompt: 'You are an expert cover letter writer. Write a compelling, personalized cover letter in plain text only.',
-  });
+  return generateWithFallback(
+    buildCoverLetterPrompt(userInput),
+    {
+      maxTokens:    700,
+      systemPrompt: 'You are an expert cover letter writer who crafts compelling, personalized cover letters that get interviews. Output plain text only.',
+    }
+  );
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JOB ANALYZER (stub — Phase 3)
+// JOB DESCRIPTION ANALYZER
 // ─────────────────────────────────────────────────────────────────────────────
 
 const buildJobAnalysisPrompt = ({ jobDescription, skills }) => {
   return `
-Analyze this job description and provide a structured breakdown:
+Analyze this job description and provide a structured career coaching report.
 
 JOB DESCRIPTION:
 ${jobDescription}
 
 CANDIDATE SKILLS: ${skills || 'Not provided'}
 
-Provide:
-1. KEY REQUIREMENTS — top 5 must-have requirements
-2. KEYWORDS — ATS keywords to include in resume
-3. SKILL MATCH — which candidate skills match and which are missing
-4. RECOMMENDATIONS — 3 specific tips to tailor the resume for this role
+Provide this exact structure:
+KEY REQUIREMENTS
+• List the top 5 must-have requirements
 
-Output plain text with clear section headers.
+ATS KEYWORDS
+• List 10 important keywords to include in the resume
+
+SKILL MATCH
+• Skills the candidate already has that match
+• Skills that are missing or need development
+
+RECOMMENDATIONS
+• 3 specific, actionable tips to improve the resume for this role
+
+Plain text only. Use • for bullets.
 `.trim();
 };
 
 const analyzeJobDescription = async (userInput) => {
-  const prompt = buildJobAnalysisPrompt(userInput);
-  return generateWithOllama(prompt, {
-    maxTokens:    550,
-    temperature:  0.5,
-    systemPrompt: 'You are an expert career coach and ATS optimization specialist. Be concise.',
-  });
+  return generateWithFallback(
+    buildJobAnalysisPrompt(userInput),
+    {
+      maxTokens:    800,
+      systemPrompt: 'You are an expert career coach and ATS optimization specialist. Give specific, actionable advice. Output plain text only.',
+    }
+  );
 };
 
-module.exports = { generateResume, generateCoverLetter, analyzeJobDescription, generateWithOllama };
+module.exports = {
+  generateResume,
+  generateCoverLetter,
+  analyzeJobDescription,
+  generateWithFallback,
+};

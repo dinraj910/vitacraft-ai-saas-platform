@@ -102,7 +102,7 @@ const LandingPage = () => {
 
         <div className="max-w-4xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500/10 border border-brand-500/25 rounded-full text-xs text-brand-300 font-medium mb-8">
-            <Zap className="w-3 h-3" /> Powered by Ollama LLM · Free to start
+            <Zap className="w-3 h-3" /> Powered by AI · Free to start
           </div>
 
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight mb-6">

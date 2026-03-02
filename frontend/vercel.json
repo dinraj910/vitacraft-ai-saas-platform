@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://vitacraft-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

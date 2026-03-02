@@ -2,10 +2,13 @@ const { registerUser, loginUser, refreshAccessToken, logoutUser, getCurrentUser 
 const { sendSuccess, sendError, ERROR_CODES } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 
+// In production (Render + Vercel) cookies cross the Vercel proxy — keep SameSite lax
+// so the httpOnly refresh-token cookie flows through the Vercel rewrite correctly.
+const isProduction = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'strict',
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 };

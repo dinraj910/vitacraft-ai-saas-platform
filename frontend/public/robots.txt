@@ -1,0 +1,13 @@
+# VitaCraft AI — robots.txt
+# https://vitacraft-ai.vercel.app
+
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /history
+Disallow: /resume
+Disallow: /cover-letter
+Disallow: /job-analyzer
+
+# Sitemap
+Sitemap: https://vitacraft-ai.vercel.app/sitemap.xml

@@ -1,0 +1,58 @@
+{
+  "name": "VitaCraft AI",
+  "short_name": "VitaCraft",
+  "description": "AI-powered resume, cover letter, and job analysis generator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f23",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "VitaCraft AI Dashboard"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "Generate Resume",
+      "url": "/resume",
+      "description": "Create a new AI-generated resume"
+    },
+    {
+      "name": "Generate Cover Letter",
+      "url": "/cover-letter",
+      "description": "Create a new AI-generated cover letter"
+    },
+    {
+      "name": "Analyze Job",
+      "url": "/job-analyzer",
+      "description": "Analyze a job description with AI"
+    }
+  ]
+}

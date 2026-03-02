@@ -1,13 +1,119 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- ── Character Set & Viewport ─────────────────────────── -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="VitaCraft AI — AI-powered resume and career document generation" />
-    <title>VitaCraft AI</title>
+
+    <!-- ── Primary SEO ───────────────────────────────────────── -->
+    <title>VitaCraft AI — AI-Powered Resume & Career Document Generator</title>
+    <meta name="description" content="VitaCraft AI uses advanced AI to generate professional resumes, cover letters, and analyze job descriptions in seconds. Free plan available. Powered by Groq, Gemini & more." />
+    <meta name="keywords" content="AI resume builder, cover letter generator, job analyzer, ATS resume, career AI, resume maker, VitaCraft AI" />
+    <meta name="author" content="DINRAJ K DINESH" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#6366f1" />
+
+    <!-- ── Canonical URL (update after deployment) ───────────── -->
+    <link rel="canonical" href="https://vitacraft-ai.vercel.app/" />
+
+    <!-- ── Open Graph (Facebook, LinkedIn previews) ─────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VitaCraft AI" />
+    <meta property="og:title" content="VitaCraft AI — AI-Powered Resume & Career Document Generator" />
+    <meta property="og:description" content="Generate professional resumes, cover letters, and job analysis reports in seconds using cutting-edge AI. Free plan — no credit card required." />
+    <meta property="og:url" content="https://vitacraft-ai.vercel.app/" />
+    <meta property="og:image" content="https://vitacraft-ai.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="VitaCraft AI — AI Resume & Cover Letter Generator" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ── Twitter Card ──────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VitaCraft AI — AI-Powered Resume Generator" />
+    <meta name="twitter:description" content="Generate professional resumes, cover letters & job analysis reports with AI. Free plan available." />
+    <meta name="twitter:image" content="https://vitacraft-ai.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="VitaCraft AI dashboard preview" />
+
+    <!-- ── Web App / PWA ─────────────────────────────────────── -->
+    <meta name="application-name" content="VitaCraft AI" />
+    <meta name="apple-mobile-web-app-title" content="VitaCraft AI" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ── Favicons ──────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- ── Security Headers (CSP via meta as fallback) ───────── -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+
+    <!-- ── DNS Prefetch & Preconnect ────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="https://vitacraft-backend.onrender.com" />
+    <link rel="dns-prefetch" href="https://js.stripe.com" />
+
+    <!-- ── Google Fonts ──────────────────────────────────────── -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ── JSON-LD Structured Data (Google Rich Results) ────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "VitaCraft AI",
+      "url": "https://vitacraft-ai.vercel.app",
+      "description": "AI-powered SaaS platform that generates professional resumes, cover letters, and analyzes job descriptions using cloud LLM APIs.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free Plan",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "5 AI generations per month"
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Plan",
+          "price": "9.99",
+          "priceCurrency": "USD",
+          "description": "50 AI generations per month with PDF download and S3 storage"
+        },
+        {
+          "@type": "Offer",
+          "name": "Enterprise Plan",
+          "price": "29.99",
+          "priceCurrency": "USD",
+          "description": "200 AI generations per month with all features and priority support"
+        }
+      ],
+      "creator": {
+        "@type": "Person",
+        "name": "DINRAJ K DINESH"
+      },
+      "featureList": [
+        "AI Resume Generator",
+        "AI Cover Letter Generator",
+        "Job Description Analyzer",
+        "ATS Resume Analyzer",
+        "PDF Download",
+        "Cloud Storage (AWS S3)"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
